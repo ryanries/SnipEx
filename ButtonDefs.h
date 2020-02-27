@@ -20,7 +20,8 @@ BUTTON gNewButton = {
 	BUTTON_NEW,         // Id
 	FALSE,              // SelectedTool
 	0,                  // CursorId
-	NULL                // Cursor
+	NULL,               // Cursor
+	COLOR_NONE
 };
 
 BUTTON gDelayButton = {
@@ -37,7 +38,8 @@ BUTTON gDelayButton = {
 	BUTTON_DELAY,       // Id
 	FALSE,              // SelectedTool
 	0,                  // CursorId
-	NULL                // HCURSOR
+	NULL,               // HCURSOR
+	COLOR_NONE
 };
 
 BUTTON gSaveButton = {
@@ -54,7 +56,8 @@ BUTTON gSaveButton = {
 	BUTTON_SAVE,
 	FALSE,
 	0,
-	NULL
+	NULL,
+	COLOR_NONE
 };
 
 BUTTON gCopyButton = {
@@ -71,7 +74,8 @@ BUTTON gCopyButton = {
 	BUTTON_COPY,
 	FALSE,
 	0,
-	NULL
+	NULL,
+	COLOR_NONE
 };
 
 BUTTON gHilighterButton = {
@@ -79,7 +83,7 @@ BUTTON gHilighterButton = {
 	"Hilight",
 	NULL,
 	NULL,
-	IDB_HILIGHT32x32E,
+	IDB_YELLOWHILIGHT32x32,
 	IDB_HILIGHT32x32D,
 	BUTTONSTATE_NORMAL,
 	0x48,
@@ -87,8 +91,9 @@ BUTTON gHilighterButton = {
 	FALSE,
 	BUTTON_HILIGHT,
 	FALSE,
-	IDC_HILIGHTCURSOR,
-	NULL
+	IDC_YELLOWHILIGHTCURSOR,
+	NULL,
+	COLOR_YELLOW
 };
 
 BUTTON gRectangleButton = {
@@ -96,7 +101,7 @@ BUTTON gRectangleButton = {
 	"Box",					// Caption
 	NULL,					// EnalbedIcon
 	NULL,					// DisabledIcon
-	IDB_BOX32x32E,			// EnabledIconId
+	IDB_BOX32x32RED,		// EnabledIconId
 	IDB_BOX32x32D,			// DisabledIconId
 	BUTTONSTATE_NORMAL,		// State
 	0x42,					// Hotkey (B)
@@ -105,7 +110,8 @@ BUTTON gRectangleButton = {
 	BUTTON_BOX,				// Id
 	FALSE,					// SelectedTool
 	IDC_REDCROSSHAIR,		// CursorId
-	NULL					// HCURSOR
+	NULL,					// HCURSOR
+	COLOR_RED
 };
 
 BUTTON gArrowButton = {
@@ -113,7 +119,7 @@ BUTTON gArrowButton = {
 	"Arrow",			    // Caption
 	NULL,					// EnalbedIcon
 	NULL,					// DisabledIcon
-	IDB_ARROW32x32E,		// EnabledIconId
+	IDB_ARROW32x32RED,		// EnabledIconId
 	IDB_ARROW32x32D,		// DisabledIconId
 	BUTTONSTATE_NORMAL,		// State
 	0x41,					// Hotkey (A)
@@ -122,7 +128,8 @@ BUTTON gArrowButton = {
 	BUTTON_ARROW,			// Id
 	FALSE,					// SelectedTool
 	IDC_REDCROSSHAIR,		// CursorId
-	NULL					// HCURSOR
+	NULL,					// HCURSOR
+	COLOR_RED
 };
 
 BUTTON gRedactButton = {
@@ -139,7 +146,8 @@ BUTTON gRedactButton = {
 	BUTTON_REDACT,
 	FALSE,
 	IDC_REDACTCURSOR,
-	NULL
+	NULL,
+	COLOR_BLACK
 };
 
 BUTTON* gButtons[] = { &gNewButton, &gDelayButton, &gSaveButton, &gCopyButton, &gHilighterButton, &gRectangleButton, &gArrowButton, &gRedactButton };

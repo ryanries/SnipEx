@@ -14,6 +14,7 @@
 
 #pragma warning(disable: 4820)		// Disable compiler warning about padding bytes being added to structs
 #pragma warning(disable: 4710)		// Disable compiler warning about functions not being inlined
+#pragma warning(disable: 5045)		// Disable Spectre mitigation informational warning
 
 #include <stdio.h>					// For doing stuff with strings
 #include <math.h>					// Needed to introduce some math to draw the arrow head for the arrow tool
@@ -256,6 +257,8 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE PreviousInstanc
 	AddReplaceSnippingToolMenuItem(Instance);
 	
 	AddDropShadowToolMenuItem();
+
+	AddUndoMenuItem();
 
 
 	gMainWindowIsRunning = TRUE;
@@ -503,7 +506,64 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 
 					SelectObject(ScratchDC, (HBITMAP)gScratchBitmap);					
 
-					const BYTE HilightBits[] = { 0x00, 0xFF, 0xFF, 0xFF };
+					BYTE HilightBits[] = { 0, 0, 0, 0 }; 
+
+					switch (gHilighterButton.Color)
+					{
+						case COLOR_YELLOW:
+						{							
+							memset(&HilightBits[0], 0x00, 1);
+
+							memset(&HilightBits[1], 0xFF, 1);
+
+							memset(&HilightBits[2], 0xFF, 1);
+
+							memset(&HilightBits[3], 0xFF, 1);
+
+							break;
+						}
+						case COLOR_PINK:
+						{
+							memset(&HilightBits[0], 0xDC, 1);
+
+							memset(&HilightBits[1], 0x00, 1);
+
+							memset(&HilightBits[2], 0xFF, 1);
+
+							memset(&HilightBits[3], 0xFF, 1);
+
+							break;
+						}						
+						case COLOR_ORANGE:
+						{
+							memset(&HilightBits[0], 0x00, 1);
+
+							memset(&HilightBits[1], 0x6A, 1);
+
+							memset(&HilightBits[2], 0xFF, 1);
+
+							memset(&HilightBits[3], 0xFF, 1);
+
+							break;
+						}
+						case COLOR_GREEN:
+						{
+							memset(&HilightBits[0], 0x00, 1);
+
+							memset(&HilightBits[1], 0xFF, 1);
+
+							memset(&HilightBits[2], 0x00, 1);
+
+							memset(&HilightBits[3], 0xFF, 1);
+
+							break;
+						}
+						default:
+						{
+							MyOutputDebugStringA("[%s] Line %d: BUG: Unknown color in hilighter function!\n", __FUNCTION__, __LINE__);
+						}
+					}
+
 					HBITMAP HilightPixel = CreateBitmap(1, 1, 1, 32, HilightBits);
 
 					SelectObject(HilightDC, HilightPixel);
@@ -577,14 +637,60 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					
 					SelectObject(CopyDC, CleanCopy);
 
-					HPEN RedPen = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
+					HPEN Pen = NULL; //CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
 
-					SelectObject(CopyDC, RedPen);
+					switch (gRectangleButton.Color)
+					{
+						case COLOR_RED:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));						
+
+							break;
+						}
+						case COLOR_GREEN:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(0, 255, 0));						
+
+							break;
+						}
+						case COLOR_BLUE:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(0, 0, 255));						
+
+							break;
+						}
+						case COLOR_BLACK:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));						
+
+							break;
+						}
+						case COLOR_WHITE:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(255, 255, 255));						
+
+							break;
+						}
+						case COLOR_YELLOW:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(255, 255, 0));						
+
+							break;
+						}
+						default:
+						{
+							MyOutputDebugStringA("[%s] Line %d: BUG: Unknown color for arrow tool!\n", __FUNCTION__, __LINE__);
+						}
+					}
+
+					SelectObject(CopyDC, Pen);
 
 					SelectObject(CopyDC, (HBRUSH)GetStockObject(NULL_BRUSH));
 
 					POINT CurrentMousePos = { 0 };
+
 					GetCursorPos(&CurrentMousePos);
+
 					ScreenToClient(gMainWindowHandle, &CurrentMousePos);
 
 					Rectangle(CopyDC, MousePosWhenDrawingStarted.x, MousePosWhenDrawingStarted.y - 56, CurrentMousePos.x, CurrentMousePos.y - 56);
@@ -604,9 +710,9 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					{
 						MyOutputDebugStringA("[%s] Line %d: DeleteDC(gScratchDC) failed!\n", __FUNCTION__, __LINE__);
 					}
-					if (DeleteObject(RedPen) == 0)
+					if (DeleteObject(Pen) == 0)
 					{
-						MyOutputDebugStringA("[%s] Line %d: DeleteObject(RedPen) failed!\n", __FUNCTION__, __LINE__);
+						MyOutputDebugStringA("[%s] Line %d: DeleteObject(Pen) failed!\n", __FUNCTION__, __LINE__);
 					}
 					if (DeleteObject(CleanCopy) == 0)
 					{
@@ -629,11 +735,68 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 
 					SelectObject(CopyDC, CleanCopy);
 
-					HPEN RedPen     = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
-					HBRUSH RedBrush = CreateSolidBrush(RGB(255, 0, 0));
+					HPEN Pen = NULL;
 
-					SelectObject(CopyDC, RedPen);
-					SelectObject(CopyDC, RedBrush);
+					HBRUSH Brush = NULL;
+
+					switch (gArrowButton.Color)
+					{
+						case COLOR_RED:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
+
+							Brush = CreateSolidBrush(RGB(255, 0, 0));
+
+							break;
+						}
+						case COLOR_GREEN:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(0, 255, 0));
+
+							Brush = CreateSolidBrush(RGB(0, 255, 0));
+
+							break;
+						}
+						case COLOR_BLUE:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+
+							Brush = CreateSolidBrush(RGB(0, 0, 255));
+
+							break;
+						}
+						case COLOR_BLACK:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
+
+							Brush = CreateSolidBrush(RGB(0, 0, 0));
+
+							break;
+						}
+						case COLOR_WHITE:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(255, 255, 255));
+
+							Brush = CreateSolidBrush(RGB(255, 255, 255));
+
+							break;
+						}
+						case COLOR_YELLOW:
+						{
+							Pen = CreatePen(PS_SOLID, 2, RGB(255, 255, 0));
+
+							Brush = CreateSolidBrush(RGB(255, 255, 0));
+
+							break;
+						}
+						default:
+						{
+							MyOutputDebugStringA("[%s] Line %d: BUG: Unknown color for arrow tool!\n", __FUNCTION__, __LINE__);
+						}
+					}
+
+					SelectObject(CopyDC, Pen);
+					SelectObject(CopyDC, Brush);
 
 					POINT CurrentMousePos = { 0 };
 					
@@ -655,7 +818,7 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					const float dx = (float)(p1.x - p0.x);
 					const float dy = (float)(p1.y - p0.y);
 
-					float ArrowLength = (float)sqrt(dx*dx + dy*dy);
+					float ArrowLength = (float)sqrt((double)dx * (double)dx + (double)dy * (double)dy);
 
 					// unit vector parallel to the line.
 					float ux = dx / ArrowLength;
@@ -704,11 +867,11 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					{
 						MyOutputDebugStringA("[%s] Line %d: DeleteDC(gScratchDC) failed!\n", __FUNCTION__, __LINE__);
 					}
-					if (DeleteObject(RedPen) == 0)
+					if (DeleteObject(Pen) == 0)
 					{
 						MyOutputDebugStringA("[%s] Line %d: DeleteObject(RedPen) failed!\n", __FUNCTION__, __LINE__);
 					}
-					if (DeleteObject(RedBrush) == 0)
+					if (DeleteObject(Brush) == 0)
 					{
 						MyOutputDebugStringA("[%s] Line %d: DeleteObject(RedBrush) failed!\n", __FUNCTION__, __LINE__);
 					}
@@ -810,6 +973,7 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 			switch (LOWORD(WParam))
 			{
 				case WM_LBUTTONDOWN:
+				case WM_RBUTTONDOWN:
 				{
 					POINT Mouse = { 0 };
 					
@@ -822,11 +986,238 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					{
 						if (Control == gButtons[Counter]->Handle)
 						{
-							MyOutputDebugStringA("[%s] Line %d: Mouse button pressed over '%s' button.\n", __FUNCTION__, __LINE__, gButtons[Counter]->Caption);
+							if (LOWORD(WParam) == WM_LBUTTONDOWN)
+							{
+								MyOutputDebugStringA("[%s] Line %d: Left mouse button pressed over '%s' button.\n", __FUNCTION__, __LINE__, gButtons[Counter]->Caption);
+							}
+							else
+							{
+								MyOutputDebugStringA("[%s] Line %d: Right mouse button pressed over '%s' button.\n", __FUNCTION__, __LINE__, gButtons[Counter]->Caption);								
+							}
 
 							if (gButtons[Counter]->Enabled == TRUE)
 							{
-								gButtons[Counter]->State = BUTTONSTATE_PRESSED;
+								if (LOWORD(WParam) == WM_LBUTTONDOWN)
+								{
+									gButtons[Counter]->State = BUTTONSTATE_PRESSED;
+								}
+								else
+								{
+									if (gButtons[Counter]->Id == BUTTON_HILIGHT)
+									{
+										switch (gButtons[Counter]->Color)
+										{
+											case COLOR_YELLOW:
+											{
+												gButtons[Counter]->Color = COLOR_PINK;
+
+												gButtons[Counter]->EnabledIconId = IDB_PINKHILIGHT32x32;
+
+												gButtons[Counter]->CursorId = IDC_PINKHILIGHTCURSOR;
+
+												break;
+											}
+											case COLOR_PINK:
+											{
+												gButtons[Counter]->Color = COLOR_ORANGE;
+
+												gButtons[Counter]->EnabledIconId = IDB_ORANGEHILIGHT32x32;
+
+												gButtons[Counter]->CursorId = IDC_ORANGEHILIGHTCURSOR;
+
+												break;
+											}
+											case COLOR_ORANGE:
+											{
+												gButtons[Counter]->Color = COLOR_GREEN;
+
+												gButtons[Counter]->EnabledIconId = IDB_GREENHILIGHT32x32;
+
+												gButtons[Counter]->CursorId = IDC_GREENHILIGHTCURSOR;
+
+												break;
+											}
+											case COLOR_GREEN:
+											{
+												gButtons[Counter]->Color = COLOR_YELLOW;
+
+												gButtons[Counter]->EnabledIconId = IDB_YELLOWHILIGHT32x32;
+
+												gButtons[Counter]->CursorId = IDC_YELLOWHILIGHTCURSOR;
+
+												break;
+											}
+											default:
+											{
+												MyOutputDebugStringA("[%s] Line %d: BUG: Unknown color when trying to change hilighter color!\n", __FUNCTION__, __LINE__);
+											}
+										}
+
+										DeleteObject(gButtons[Counter]->EnabledIcon);
+
+										DeleteObject(gButtons[Counter]->Cursor);
+
+										gButtons[Counter]->EnabledIcon = (HBITMAP)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(gButtons[Counter]->EnabledIconId), IMAGE_BITMAP, 0, 0, 0);
+
+										gButtons[Counter]->Cursor = LoadCursor(GetModuleHandle(NULL), MAKEINTRESOURCE(gButtons[Counter]->CursorId));
+									}
+									else if (gButtons[Counter]->Id == BUTTON_BOX)
+									{
+										switch (gButtons[Counter]->Color)
+										{
+											case COLOR_RED:
+											{
+												gButtons[Counter]->Color = COLOR_GREEN;
+
+												gButtons[Counter]->EnabledIconId = IDB_BOX32x32GREEN;
+
+												gButtons[Counter]->CursorId = IDC_GREENCROSSHAIR;
+
+												break;
+											}
+											case COLOR_GREEN:
+											{
+												gButtons[Counter]->Color = COLOR_BLUE;
+
+												gButtons[Counter]->EnabledIconId = IDB_BOX32x32BLUE;
+
+												gButtons[Counter]->CursorId = IDC_BLUECROSSHAIR;
+
+												break;
+											}
+											case COLOR_BLUE:
+											{
+												gButtons[Counter]->Color = COLOR_BLACK;
+
+												gButtons[Counter]->EnabledIconId = IDB_BOX32x32BLACK;
+
+												gButtons[Counter]->CursorId = IDC_BLACKCROSSHAIR;
+
+												break;
+											}
+											case COLOR_BLACK:
+											{
+												gButtons[Counter]->Color = COLOR_WHITE;
+
+												gButtons[Counter]->EnabledIconId = IDB_BOX32x32WHITE;
+
+												gButtons[Counter]->CursorId = IDC_WHITECROSSHAIR;
+
+												break;
+											}
+											case COLOR_WHITE:
+											{
+												gButtons[Counter]->Color = COLOR_YELLOW;
+
+												gButtons[Counter]->EnabledIconId = IDB_BOX32x32YELLOW;
+
+												gButtons[Counter]->CursorId = IDC_YELLOWCROSSHAIR;
+
+												break;
+											}
+											case COLOR_YELLOW:
+											{
+												gButtons[Counter]->Color = COLOR_RED;
+
+												gButtons[Counter]->EnabledIconId = IDB_BOX32x32RED;
+
+												gButtons[Counter]->CursorId = IDC_REDCROSSHAIR;
+
+												break;
+											}
+											default:
+											{
+												MyOutputDebugStringA("[%s] Line %d: BUG: Unknown color when trying to change box color!\n", __FUNCTION__, __LINE__);
+											}
+										}
+
+										DeleteObject(gButtons[Counter]->EnabledIcon);
+
+										DeleteObject(gButtons[Counter]->Cursor);
+
+										gButtons[Counter]->EnabledIcon = (HBITMAP)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(gButtons[Counter]->EnabledIconId), IMAGE_BITMAP, 0, 0, 0);
+
+										gButtons[Counter]->Cursor = LoadCursor(GetModuleHandle(NULL), MAKEINTRESOURCE(gButtons[Counter]->CursorId));
+									}
+									else if (gButtons[Counter]->Id == BUTTON_ARROW)
+									{
+										switch (gButtons[Counter]->Color)
+										{
+											case COLOR_RED:
+											{
+												gButtons[Counter]->Color = COLOR_GREEN;
+												
+												gButtons[Counter]->EnabledIconId = IDB_ARROW32x32GREEN;
+
+												gButtons[Counter]->CursorId = IDC_GREENCROSSHAIR;												
+
+												break;
+											}
+											case COLOR_GREEN:
+											{
+												gButtons[Counter]->Color = COLOR_BLUE;
+
+												gButtons[Counter]->EnabledIconId = IDB_ARROW32x32BLUE;
+
+												gButtons[Counter]->CursorId = IDC_BLUECROSSHAIR;												
+
+												break;
+											}
+											case COLOR_BLUE:
+											{
+												gButtons[Counter]->Color = COLOR_BLACK;
+
+												gButtons[Counter]->EnabledIconId = IDB_ARROW32x32BLACK;
+
+												gButtons[Counter]->CursorId = IDC_BLACKCROSSHAIR;
+
+												break;
+											}
+											case COLOR_BLACK:
+											{
+												gButtons[Counter]->Color = COLOR_WHITE;
+
+												gButtons[Counter]->EnabledIconId = IDB_ARROW32x32WHITE;
+
+												gButtons[Counter]->CursorId = IDC_WHITECROSSHAIR;
+
+												break;
+											}
+											case COLOR_WHITE:
+											{
+												gButtons[Counter]->Color = COLOR_YELLOW;
+
+												gButtons[Counter]->EnabledIconId = IDB_ARROW32x32YELLOW;
+
+												gButtons[Counter]->CursorId = IDC_YELLOWCROSSHAIR;
+
+												break;
+											}
+											case COLOR_YELLOW:
+											{
+												gButtons[Counter]->Color = COLOR_RED;
+
+												gButtons[Counter]->EnabledIconId = IDB_ARROW32x32RED;
+
+												gButtons[Counter]->CursorId = IDC_REDCROSSHAIR;
+
+												break;
+											}
+											default:
+											{
+												MyOutputDebugStringA("[%s] Line %d: BUG: Unknown color when trying to change arrow color!\n", __FUNCTION__, __LINE__);
+											}
+										}
+
+										DeleteObject(gButtons[Counter]->EnabledIcon);
+
+										DeleteObject(gButtons[Counter]->Cursor);
+
+										gButtons[Counter]->EnabledIcon = (HBITMAP)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(gButtons[Counter]->EnabledIconId), IMAGE_BITMAP, 0, 0, 0);
+
+										gButtons[Counter]->Cursor = LoadCursor(GetModuleHandle(NULL), MAKEINTRESOURCE(gButtons[Counter]->CursorId));
+									}
+								}
 							}
 							else
 							{
@@ -1305,6 +1696,25 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 				if (SoftwareKey != NULL)
 				{
 					RegCloseKey(SoftwareKey);
+				}
+			}
+			else if (WParam == SYSCMD_UNDO)
+			{
+				if (gCurrentSnipState > 0 && (gAppState == APPSTATE_AFTERCAPTURE))
+				{
+					gCurrentSnipState--;
+
+					MyOutputDebugStringA("[%s] Line %d: Deleting gSnipStates[gCurrentSnipState + 1]\n", __FUNCTION__, __LINE__);
+
+					memset(HilighterPixelsAlreadyDrawn, 0, sizeof(HilighterPixelsAlreadyDrawn));
+					HilighterPixelsAlreadyDrawnCounter = 0;
+
+					if (DeleteObject(gSnipStates[gCurrentSnipState + 1]) == 0)
+					{
+						MyOutputDebugStringA("[%s] Line %d: DeleteObject failed!\n", __FUNCTION__, __LINE__);
+					}
+
+					InvalidateRect(Window, NULL, FALSE);
 				}
 			}
 
@@ -2599,6 +3009,13 @@ Cleanup:
 	{
 		RegCloseKey(SoftwareKey);
 	}
+}
+
+void AddUndoMenuItem(void)
+{
+	HMENU SystemMenu = GetSystemMenu(gMainWindowHandle, FALSE);
+
+	AppendMenu(SystemMenu, MF_STRING, SYSCMD_UNDO, "Undo (Ctrl+Z)");
 }
 
 BOOL IsAppRunningElevated(void)

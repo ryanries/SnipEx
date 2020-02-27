@@ -21,34 +21,38 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{57BCD2F3-2FB7-4886-90D8-25C67A9859DD}</ProjectGuid>
     <RootNamespace>SnipEx</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -97,6 +101,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <EnablePREfast>true</EnablePREfast>
+      <ControlFlowGuard>false</ControlFlowGuard>
     </ClCompile>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
@@ -114,6 +119,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <EnablePREfast>true</EnablePREfast>
+      <ControlFlowGuard>false</ControlFlowGuard>
     </ClCompile>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
@@ -133,6 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <EnablePREfast>true</EnablePREfast>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -140,8 +147,10 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>"C:\Program Files (x86)\Windows Kits\8.1\bin\x64\signtool.exe" sign /n "Joseph Ryan Ries" "$(TargetPath)"</Command>
-      <Message>Sign binary with certificate</Message>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
@@ -158,6 +167,7 @@
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <EnablePREfast>true</EnablePREfast>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -165,8 +175,10 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>"C:\Program Files (x86)\Windows Kits\8.1\bin\x64\signtool.exe" sign /n "Joseph Ryan Ries" "$(TargetPath)"</Command>
-      <Message>Sign binary with certificate</Message>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
@@ -187,16 +199,16 @@
     <ResourceCompile Include="SnipEx.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Assets\Arrow32x32.bmp" />
+    <Image Include="Assets\Arrow32x32Blue.bmp" />
     <Image Include="Assets\Arrow32x32Disabled.bmp" />
-    <Image Include="Assets\Box32x32.bmp" />
+    <Image Include="Assets\Arrow32x32Green.bmp" />
+    <Image Include="Assets\Arrow32x32Red.bmp" />
     <Image Include="Assets\Box32x32Disabled.bmp" />
     <Image Include="Assets\Clipboard32x32.bmp" />
     <Image Include="Assets\Clipboard32x32Disabled.bmp" />
     <Image Include="Assets\Clock32x32.bmp" />
     <Image Include="Assets\Floppy32x32Disabled.bmp" />
     <Image Include="Assets\Floppy32x32Enabled.bmp" />
-    <Image Include="Assets\Hilighter32x32.bmp" />
     <Image Include="Assets\Hilighter32x32Disabled.bmp" />
     <Image Include="Assets\Redact32x32.bmp" />
     <Image Include="Assets\Redact32x32Disabled.bmp" />
@@ -205,9 +217,10 @@
     <Image Include="Assets\UAC_8bpp.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\BoxCursor.cur" />
-    <None Include="Assets\HilighterCursor.cur" />
+    <None Include="Assets\BlueBoxCursor.cur" />
+    <None Include="Assets\GreenBoxCursor.cur" />
     <None Include="Assets\RedactCursor.cur" />
+    <None Include="Assets\RedBoxCursor.cur" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

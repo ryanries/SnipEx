@@ -60,22 +60,13 @@
     <Image Include="Assets\Clipboard32x32Disabled.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="Assets\Hilighter32x32.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="Assets\Hilighter32x32Disabled.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Assets\Box32x32.bmp">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Assets\Box32x32Disabled.bmp">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Assets\UAC_8bpp.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Assets\Arrow32x32.bmp">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Assets\Arrow32x32Disabled.bmp">
@@ -87,15 +78,27 @@
     <Image Include="Assets\Redact32x32Disabled.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="Assets\Arrow32x32Red.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\Arrow32x32Green.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\Arrow32x32Blue.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\HilighterCursor.cur">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="Assets\BoxCursor.cur">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="Assets\RedactCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\BlueBoxCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\GreenBoxCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\RedBoxCursor.cur">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

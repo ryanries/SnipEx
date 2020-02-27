@@ -17,9 +17,20 @@
 #define BUTTON_ARROW   10007
 #define BUTTON_REDACT  10008
 
+#define COLOR_NONE		0	// For buttons for which color is not applicable, such as the Save button for example
+#define COLOR_RED		1
+#define COLOR_GREEN		2
+#define COLOR_BLUE		3
+#define COLOR_BLACK		4
+#define COLOR_WHITE		5
+#define COLOR_YELLOW	6
+#define COLOR_PINK		7
+#define COLOR_ORANGE	8
+
 #define SYSCMD_REPLACE 20001
 #define SYSCMD_RESTORE 20002
 #define SYSCMD_SHADOW  20003
+#define SYSCMD_UNDO    20004
 
 #define DELAY_TIMER    30001
 
@@ -55,6 +66,7 @@ typedef struct BUTTON
 	BOOL        SelectedTool;   // If the button is selected as a tool it should stay pressed
 	int         CursorId;
 	HCURSOR     Cursor;
+	UINT8		Color;
 } BUTTON;
 
 typedef enum APPSTATE
@@ -95,6 +107,8 @@ BOOL SavePngToFile(_In_ wchar_t* FilePath);
 void AddReplaceSnippingToolMenuItem(_In_ HINSTANCE Instance);
 
 void AddDropShadowToolMenuItem(void);
+
+void AddUndoMenuItem(void);
 
 BOOL IsAppRunningElevated(void);
 

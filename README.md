@@ -53,6 +53,10 @@ This looks better:
 History:
 -------
 
+Update 2/26/2020:
+- Version 1.1.12
+  - Added new colors for the rectangle, hilighter, and arrow tools! Just right-click the buttons to cycle through different colors!
+  - Added an "Undo (Ctrl+Z)" to the drop-down menu. Ctrl+Z always worked, but the menu item might help people who don't know the keyboard shortcut.
 
 Update 7/12/2017:
 - Version 1.0.11

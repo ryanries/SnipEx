@@ -87,6 +87,51 @@
     <Image Include="Assets\Arrow32x32Blue.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="Assets\YellowHilighter32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\PinkHilighter32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\OrangeHilighter32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\GreenHilighter32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\RedBox32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\GreenBox32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\BlueBox32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\BlackBox32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\WhiteBox32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\YellowBox32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\Arrow32x32Black.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\Arrow32x32White.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\Arrow32x32Yellow.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\Text32x32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Assets\Text32x32D.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\RedactCursor.cur">
@@ -99,6 +144,30 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="Assets\RedBoxCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\YellowHilighterCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\PinkHilighterCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\OrangeHilighterCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\GreenHilighterCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\BlackBoxCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\WhiteBoxCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\YellowBoxCursor.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\TextCursor.cur">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

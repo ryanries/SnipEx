@@ -8,7 +8,7 @@
 
 BUTTON gNewButton = {
 	{ 2,  0, 72,  52 }, // Rectangle left, top, right, bottom
-	"New",              // Caption
+	L"New",             // Caption
 	NULL,               // EnabledIcon
 	NULL,               // DisabledIcon
 	IDB_SCISSORS32x32E, // EnabledIconId
@@ -26,7 +26,7 @@ BUTTON gNewButton = {
 
 BUTTON gDelayButton = {
 	{ 74, 0, 144, 52 }, // Rectangle left, top, right, bottom
-	"Delay",            // Caption
+	L"Delay",           // Caption
 	NULL,               // EnabledIcon
 	NULL,               // DisabledIcon
 	IDB_DELAY32x32E,    // EnabledIconId
@@ -44,7 +44,7 @@ BUTTON gDelayButton = {
 
 BUTTON gSaveButton = {
 	{ 146, 0, 216, 52 },
-	"Save",
+	L"Save",
 	NULL,
 	NULL,
 	IDB_SAVE32x32E,
@@ -62,7 +62,7 @@ BUTTON gSaveButton = {
 
 BUTTON gCopyButton = {
 	{ 218, 0, 288, 52 },
-	"Copy",
+	L"Copy",
 	NULL,
 	NULL,
 	IDB_COPY32x32E,
@@ -80,7 +80,7 @@ BUTTON gCopyButton = {
 
 BUTTON gHilighterButton = {
 	{ 290, 0, 360, 52 },
-	"Hilight",
+	L"Hilight",
 	NULL,
 	NULL,
 	IDB_YELLOWHILIGHT32x32,
@@ -98,7 +98,7 @@ BUTTON gHilighterButton = {
 
 BUTTON gRectangleButton = {
 	{ 362, 0, 432, 52 },	// Rectangle left, top, right, bottom
-	"Box",					// Caption
+	L"Box",					// Caption
 	NULL,					// EnalbedIcon
 	NULL,					// DisabledIcon
 	IDB_BOX32x32RED,		// EnabledIconId
@@ -116,7 +116,7 @@ BUTTON gRectangleButton = {
 
 BUTTON gArrowButton = {
 	{ 434, 0, 504, 52 },	// Rectangle left, top, right, bottom
-	"Arrow",			    // Caption
+	L"Arrow",			    // Caption
 	NULL,					// EnalbedIcon
 	NULL,					// DisabledIcon
 	IDB_ARROW32x32RED,		// EnabledIconId
@@ -134,7 +134,7 @@ BUTTON gArrowButton = {
 
 BUTTON gRedactButton = {
 	{ 506, 0, 576, 52 },
-	"Redact",
+	L"Redact",
 	NULL,
 	NULL,
 	IDB_REDACT32x32E,
@@ -150,4 +150,22 @@ BUTTON gRedactButton = {
 	COLOR_BLACK
 };
 
-BUTTON* gButtons[] = { &gNewButton, &gDelayButton, &gSaveButton, &gCopyButton, &gHilighterButton, &gRectangleButton, &gArrowButton, &gRedactButton };
+BUTTON gTextButton = {
+	{ 578, 0, 648, 52 },
+	L"Text",
+	NULL,
+	NULL,
+	IDB_TEXT32x32E,
+	IDB_TEXT32x32D,
+	BUTTONSTATE_NORMAL,
+	0x54,
+	NULL,
+	FALSE,
+	BUTTON_TEXT,
+	FALSE,
+	IDC_TEXTCURSOR,
+	NULL,
+	COLOR_NONE
+};
+
+BUTTON* gButtons[] = { &gNewButton, &gDelayButton, &gSaveButton, &gCopyButton, &gHilighterButton, &gRectangleButton, &gArrowButton, &gRedactButton, &gTextButton };

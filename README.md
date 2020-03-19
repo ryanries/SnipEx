@@ -3,7 +3,7 @@ SnipEx aims to be a slightly better version of Windows' built-in Snipping Tool.
 The project began when I grew tired of trying to hilight text in a screenshot, and the freehand-style hilighter would wander all over the image, making the screenshot look as if a small child had taken a hilighter to it. 
 I wanted a hilighter that would travel in a perfectly straight line, for professional-looking hilighted text.
 
-So I reinvented the wheel.
+So I reinvented the wheel and the project grew from there. 
 
 Contact ryanries09@gmail.com for any questions or bug reports or feature requests, or hit me up on Twitter @JosephRyanRies.
 
@@ -19,8 +19,13 @@ Shortcut keys:
  - B = Draw rectangle
  - A = Draw arrow
  - R = Redact (black marker)
+ - T = Text
  - Ctrl+Z = Undo the last change
 
+
+Right click on the tool buttons to cycle through different colors.
+
+Right click on the Text button to change the font, size and color.
  
 Pictures:
 ------------- 
@@ -52,6 +57,11 @@ This looks better:
 
 History:
 -------
+Update 3/19/2020:
+- Version 1.2.25
+  - Added a new Text button!
+  - Added a "Remember previously used tool" option to the drop-down menu.
+
 
 Update 2/26/2020:
 - Version 1.1.12

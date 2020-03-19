@@ -28,7 +28,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -36,14 +36,14 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -51,7 +51,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -199,28 +199,51 @@
     <ResourceCompile Include="SnipEx.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Assets\Arrow32x32Black.bmp" />
     <Image Include="Assets\Arrow32x32Blue.bmp" />
     <Image Include="Assets\Arrow32x32Disabled.bmp" />
     <Image Include="Assets\Arrow32x32Green.bmp" />
     <Image Include="Assets\Arrow32x32Red.bmp" />
+    <Image Include="Assets\Arrow32x32White.bmp" />
+    <Image Include="Assets\Arrow32x32Yellow.bmp" />
+    <Image Include="Assets\BlackBox32x32.bmp" />
+    <Image Include="Assets\BlueBox32x32.bmp" />
     <Image Include="Assets\Box32x32Disabled.bmp" />
     <Image Include="Assets\Clipboard32x32.bmp" />
     <Image Include="Assets\Clipboard32x32Disabled.bmp" />
     <Image Include="Assets\Clock32x32.bmp" />
     <Image Include="Assets\Floppy32x32Disabled.bmp" />
     <Image Include="Assets\Floppy32x32Enabled.bmp" />
+    <Image Include="Assets\GreenBox32x32.bmp" />
+    <Image Include="Assets\GreenHilighter32x32.bmp" />
     <Image Include="Assets\Hilighter32x32Disabled.bmp" />
+    <Image Include="Assets\OrangeHilighter32x32.bmp" />
+    <Image Include="Assets\PinkHilighter32x32.bmp" />
     <Image Include="Assets\Redact32x32.bmp" />
     <Image Include="Assets\Redact32x32Disabled.bmp" />
+    <Image Include="Assets\RedBox32x32.bmp" />
     <Image Include="Assets\Scissors256x256Color.ico" />
     <Image Include="Assets\Scissors32x32.bmp" />
+    <Image Include="Assets\Text32x32.bmp" />
+    <Image Include="Assets\Text32x32D.bmp" />
     <Image Include="Assets\UAC_8bpp.bmp" />
+    <Image Include="Assets\WhiteBox32x32.bmp" />
+    <Image Include="Assets\YellowBox32x32.bmp" />
+    <Image Include="Assets\YellowHilighter32x32.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\BlackBoxCursor.cur" />
     <None Include="Assets\BlueBoxCursor.cur" />
     <None Include="Assets\GreenBoxCursor.cur" />
+    <None Include="Assets\GreenHilighterCursor.cur" />
+    <None Include="Assets\OrangeHilighterCursor.cur" />
+    <None Include="Assets\PinkHilighterCursor.cur" />
     <None Include="Assets\RedactCursor.cur" />
     <None Include="Assets\RedBoxCursor.cur" />
+    <None Include="Assets\TextCursor.cur" />
+    <None Include="Assets\WhiteBoxCursor.cur" />
+    <None Include="Assets\YellowBoxCursor.cur" />
+    <None Include="Assets\YellowHilighterCursor.cur" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

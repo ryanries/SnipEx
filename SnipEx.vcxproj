@@ -104,7 +104,7 @@
       <ControlFlowGuard>false</ControlFlowGuard>
     </ClCompile>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
       <AdditionalManifestFiles>
       </AdditionalManifestFiles>
     </Manifest>
@@ -122,7 +122,7 @@
       <ControlFlowGuard>false</ControlFlowGuard>
     </ClCompile>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
       <AdditionalManifestFiles>
       </AdditionalManifestFiles>
     </Manifest>
@@ -153,7 +153,7 @@
       </Message>
     </PostBuildEvent>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
       <AdditionalManifestFiles>
       </AdditionalManifestFiles>
     </Manifest>
@@ -181,7 +181,7 @@
       </Message>
     </PostBuildEvent>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
       <AdditionalManifestFiles>
       </AdditionalManifestFiles>
     </Manifest>

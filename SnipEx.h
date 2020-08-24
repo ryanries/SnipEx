@@ -12,6 +12,8 @@
 
 #define REG_LASTTOOLNAME     L"LastTool"
 
+#define REG_AUTOCOPYNAME	 L"AutoCopy"
+
 
 // You could refer to an individual button like gButtons[BUTTON_NEW - 10001], gButtons[BUTTON_DELAY - 10001], etc.
 
@@ -62,6 +64,8 @@
 #define SYSCMD_UNDO     20004
 
 #define SYSCMD_REMEMBER 20005
+
+#define SYSCMD_AUTOCOPY 20006
 
 
 #define DELAY_TIMER    30001

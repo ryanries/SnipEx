@@ -89,6 +89,8 @@ DWORD gShouldAddDropShadow;						// Does the user want to add a drop-shadow effe
 
 DWORD gRememberLastTool;						// Does the user want to remember the previously-used tool?
 
+DWORD gAutoCopy;								// Does the user want to automatically copy each snip to the clipboard?
+
 DWORD gLastTool;								// What was the last tool that the user used? (NOT save, copy, new, or delay.)
 
 HFONT gFont;									// The font the user selects for the Text tool.
@@ -457,6 +459,18 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					}
 
 					gSnipStates[gCurrentSnipState + 1] = NULL;
+
+					if (gAutoCopy)
+					{
+						MyOutputDebugStringW(L"[%s] Line %d: Auto copy enabled. Copying snip to clipboard.\n", __FUNCTIONW__, __LINE__);
+
+						if (CopyButton_Click() == FALSE)
+						{
+							MyOutputDebugStringW(L"[%s] Line %d: Auto copy failed!\n", __FUNCTIONW__, __LINE__);
+
+							CRASH(0);
+						}
+					}
 				}
 			}
 			
@@ -667,6 +681,18 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 				}
 
 				gScratchBitmap = NULL;
+
+				if (gAutoCopy)
+				{
+					MyOutputDebugStringW(L"[%s] Line %d: Auto copy enabled. Copying snip to clipboard.\n", __FUNCTIONW__, __LINE__);
+
+					if (CopyButton_Click() == FALSE)
+					{
+						MyOutputDebugStringW(L"[%s] Line %d: Auto copy failed!\n", __FUNCTIONW__, __LINE__);
+
+						CRASH(0);
+					}
+				}
 			}
 
 			break;
@@ -1936,6 +1962,28 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					CRASH(0);
 				}
 			}
+			else if (WParam == SYSCMD_AUTOCOPY)
+			{
+				MyOutputDebugStringW(L"[%s] Line %d: User clicked on 'Automatically copy snip to clipboard' menu item.\n", __FUNCTIONW__, __LINE__);
+
+				if (gAutoCopy)
+				{
+					CheckMenuItem(GetSystemMenu(gMainWindowHandle, FALSE), SYSCMD_AUTOCOPY, MF_BYCOMMAND | MF_UNCHECKED);
+
+					gAutoCopy = FALSE;
+				}
+				else
+				{
+					CheckMenuItem(GetSystemMenu(gMainWindowHandle, FALSE), SYSCMD_AUTOCOPY, MF_BYCOMMAND | MF_CHECKED);
+
+					gAutoCopy = TRUE;
+				}
+
+				if (SetSnipExRegValue(REG_AUTOCOPYNAME, &gAutoCopy) != ERROR_SUCCESS)
+				{
+					CRASH(0);
+				}
+			}
 			else if (WParam == SYSCMD_UNDO)
 			{
 				MyOutputDebugStringW(L"[%s] Line %d: User clicked on 'Undo' menu item.\n", __FUNCTIONW__, __LINE__);
@@ -1960,6 +2008,18 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					gSnipStates[gCurrentSnipState + 1] = NULL;
 
 					InvalidateRect(Window, NULL, FALSE);
+
+					if (gAutoCopy)
+					{
+						MyOutputDebugStringW(L"[%s] Line %d: Auto copy enabled. Copying snip to clipboard.\n", __FUNCTIONW__, __LINE__);
+
+						if (CopyButton_Click() == FALSE)
+						{
+							MyOutputDebugStringW(L"[%s] Line %d: Auto copy failed!\n", __FUNCTIONW__, __LINE__);
+
+							CRASH(0);
+						}
+					}
 				}
 			}
 
@@ -2647,6 +2707,18 @@ void CaptureWindow_OnLeftButtonUp(void)
 		gDelayButton.SelectedTool = FALSE;
 
 		gDelayButton.State = BUTTONSTATE_NORMAL;
+
+		if (gAutoCopy)
+		{
+			MyOutputDebugStringW(L"[%s] Line %d: Auto copy enabled. Copying snip to clipboard.\n", __FUNCTIONW__, __LINE__);
+
+			if (CopyButton_Click() == FALSE)
+			{
+				MyOutputDebugStringW(L"[%s] Line %d: Auto copy failed!\n", __FUNCTIONW__, __LINE__);
+
+				CRASH(0);
+			}
+		}
 	}
 }
 
@@ -3418,6 +3490,11 @@ HRESULT AddAllMenuItems(_In_ HINSTANCE Instance)
 		goto Exit;
 	}
 
+	if ((Result = GetSnipExRegValue(REG_AUTOCOPYNAME, &gAutoCopy)) != ERROR_SUCCESS)
+	{
+		goto Exit;
+	}
+
 	if (gShouldAddDropShadow > 0)
 	{
 		AppendMenuW(SystemMenu, MF_STRING | MF_CHECKED, SYSCMD_SHADOW, L"Drop Shadow Effect");
@@ -3425,6 +3502,15 @@ HRESULT AddAllMenuItems(_In_ HINSTANCE Instance)
 	else
 	{
 		AppendMenuW(SystemMenu, MF_STRING | MF_UNCHECKED, SYSCMD_SHADOW, L"Drop Shadow Effect");
+	}
+
+	if (gAutoCopy > 0)
+	{
+		AppendMenuW(SystemMenu, MF_STRING | MF_CHECKED, SYSCMD_AUTOCOPY, L"Automatically copy snip to clipboard");
+	}
+	else
+	{
+		AppendMenuW(SystemMenu, MF_STRING | MF_UNCHECKED, SYSCMD_AUTOCOPY, L"Automatically copy snip to clipboard");
 	}
 
 	if (gRememberLastTool > 0)

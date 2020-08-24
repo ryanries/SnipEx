@@ -57,6 +57,10 @@ This looks better:
 
 History:
 -------
+Update 8/24/2020:
+- Version 1.3.27
+  - Added a "Automatically copy snip to clipboard" option to the drop-down menu.
+  
 Update 3/19/2020:
 - Version 1.2.25
   - Added a new Text button!

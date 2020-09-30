@@ -154,8 +154,6 @@ BOOL IsAppRunningElevated(void);
 // OutputDebugStringW enhanced with varargs. Only works in debug builds.
 void MyOutputDebugStringW(_In_ wchar_t* Message, _In_ ...);
 
-BOOL AdjustForCustomScaling(void);
-
 LSTATUS SetSnipExRegValue(_In_ wchar_t* ValueName, _In_ DWORD* ValueData);
 
 LSTATUS GetSnipExRegValue(_In_ wchar_t* ValueName, _In_ DWORD* ValueData);

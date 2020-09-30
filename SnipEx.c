@@ -1,6 +1,7 @@
 // SnipEx.c
 // Author: Joseph Ryan Ries, 2017-2020
-// The snip.exe that comes bundled with Microsoft Windows is *almost* good enough. So I made one just a little better.
+// The snip.exe that comes bundled with Microsoft Windows is *almost* good enough. 
+// So I made one just a little better.
 
 #ifndef UNICODE
 #define UNICODE									// 100% Unicode.
@@ -151,10 +152,10 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE PreviousInstanc
 	// If the user had a custom scaling/DPI level set, this app was originally not high-DPI aware, and so what would happen
 	// is that the buttons would get cropped as the non-client area of the window got bigger, and the screen would "zoom in"
 	// whenever the user clicked "New"!
-	if (AdjustForCustomScaling() == FALSE)
-	{
-		return(0);
-	}
+	//if (AdjustForCustomScaling() == FALSE)
+	//{
+	//	return(0);	
+	//}
 
 	WNDCLASSEXW CaptureWindowClass = { sizeof(WNDCLASSEXW) };
 
@@ -364,6 +365,31 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE PreviousInstanc
 
 		return(0);
 	}
+
+	// If a custom DPI/scaling level is set, the title bar and borders will get thicker
+	// as scaling level increases and that will eat into the client area of the window.
+	// Result is that buttons will get cropped as the client area of the window gets smaller
+	// as the title bar and borders get thicker. We have to compensate for that.	
+
+	RECT WindowRect = { 0 };
+
+	RECT ClientRect = { 0 };	
+
+	GetWindowRect(gMainWindowHandle, &WindowRect);
+
+	GetClientRect(gMainWindowHandle, &ClientRect);
+
+	int AdjustedHeight = (WindowRect.bottom - WindowRect.top) - (ClientRect.bottom - ClientRect.top);
+
+	int AdjustedWidth = (WindowRect.right - WindowRect.left) - (ClientRect.right - ClientRect.left);
+
+	SetWindowPos(gMainWindowHandle,
+		HWND_TOP,
+		0,
+		0,
+		gButtons[_countof(gButtons) - 1]->Rectangle.right + AdjustedWidth + 2,
+		gButtons[_countof(gButtons) - 1]->Rectangle.bottom + AdjustedHeight + 2,
+		SWP_NOMOVE | SWP_NOOWNERZORDER);
 
 	gMainWindowIsRunning = TRUE;
 
@@ -3691,178 +3717,6 @@ void MyOutputDebugStringW(_In_ wchar_t* Message, _In_ ...)
 	UNREFERENCED_PARAMETER(Message);
 
 	#endif
-}
-
-BOOL AdjustForCustomScaling(void)
-{
-	// We need to do some adjusting for non-default DPI monitors/scaling factors.
-
-	UINT DPIx = 0;
-
-	UINT DPIy = 0;
-
-	if (GetDpiForMonitor(MonitorFromWindow(GetDesktopWindow(), MONITOR_DEFAULTTOPRIMARY), MDT_EFFECTIVE_DPI, &DPIx, &DPIy) != S_OK)
-	{
-		MessageBoxW(NULL, L"Unable to determine the monitor DPI of your primary monitor!", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-
-		return(FALSE);
-	}
-
-	MyOutputDebugStringW(L"[%s] Line %d: Detected a monitor DPI of %d.\n", __FUNCTIONW__, __LINE__, DPIx);
-
-	// Pct    DPI
-	// 100% =  96 X
-	// 105% = 101
-	// 110% = 106
-	// 115% = 110
-	// 120% = 115
-	// 125% = 120
-	// 130% = 125
-	// 135% = 130
-	// 140% = 134
-	// 145% = 139
-	// 150% = 144
-	// 155% = 149
-	// 160% = 154
-	// 165% = 158
-	// 170% = 163
-	// 175% = 168
-	// 180% = 173
-	// 185% = 178
-	// 190% = 182
-	// 195% = 187
-	// 200% = 192
-	
-
-	if (DPIx == 96)
-	{
-		return(TRUE);
-	}
-
-	if (DPIx > 96 && DPIx <= 106)
-	{
-		gStartingMainWindowHeight += 2;
-
-		gStartingMainWindowWidth  += 2;
-	}
-	else if (DPIx > 106 && DPIx <= 110)
-	{
-		gStartingMainWindowHeight += 5;
-
-		gStartingMainWindowWidth  += 3;
-	}
-	else if (DPIx > 110 && DPIx <= 115)
-	{
-		gStartingMainWindowHeight += 6;
-
-		gStartingMainWindowWidth  += 3;
-	}
-	else if (DPIx > 115 && DPIx <= 120)
-	{
-		gStartingMainWindowHeight += 8;
-
-		gStartingMainWindowWidth  += 3;
-	}
-	else if (DPIx > 120 && DPIx <= 125)
-	{
-		gStartingMainWindowHeight += 10;
-
-		gStartingMainWindowWidth  += 3;
-	}
-	else if (DPIx > 125 && DPIx <= 130)
-	{
-		gStartingMainWindowHeight += 10;
-
-		gStartingMainWindowWidth  += 3;
-	}
-	else if (DPIx > 130 && DPIx <= 134)
-	{
-		gStartingMainWindowHeight += 15;
-
-		gStartingMainWindowWidth  += 5;
-	}
-	else if (DPIx > 134 && DPIx <= 139)
-	{
-		gStartingMainWindowHeight += 15;
-
-		gStartingMainWindowWidth  += 5;
-	}
-	else if (DPIx > 139 && DPIx <= 144)
-	{
-		gStartingMainWindowHeight += 17;
-
-		gStartingMainWindowWidth  += 7;
-	}
-	else if (DPIx > 144 && DPIx <= 149)
-	{
-		gStartingMainWindowHeight += 18;
-
-		gStartingMainWindowWidth  += 7;
-	}
-	else if (DPIx > 149 && DPIx <= 154)
-	{
-		gStartingMainWindowHeight += 19;
-
-		gStartingMainWindowWidth  += 7;
-	}
-	else if (DPIx > 154 && DPIx <= 158)
-	{
-		gStartingMainWindowHeight += 22;
-
-		gStartingMainWindowWidth  += 9;
-	}
-	else if (DPIx > 158 && DPIx <= 163)
-	{
-		gStartingMainWindowHeight += 23;
-
-		gStartingMainWindowWidth  += 9;
-	}
-	else if (DPIx > 163 && DPIx <= 168)
-	{
-		gStartingMainWindowHeight += 25;
-
-		gStartingMainWindowWidth  += 9;
-	}
-	else if (DPIx > 168 && DPIx <= 173)
-	{
-		gStartingMainWindowHeight += 26;
-
-		gStartingMainWindowWidth  += 9;
-	}
-	else if (DPIx > 173 && DPIx <= 178)
-	{
-		gStartingMainWindowHeight += 27;
-
-		gStartingMainWindowWidth  += 9;
-	}
-	else if (DPIx > 178 && DPIx <= 182)
-	{
-		gStartingMainWindowHeight += 30;
-
-		gStartingMainWindowWidth  += 10;
-	}
-	else if (DPIx > 182 && DPIx <= 187)
-	{
-		gStartingMainWindowHeight += 31;
-
-		gStartingMainWindowWidth  += 10;
-	}
-	else if (DPIx > 187 && DPIx <= 192)
-	{
-		gStartingMainWindowHeight += 32;
-
-		gStartingMainWindowWidth  += 10;
-	}
-	else
-	{
-		MessageBoxW(NULL, L"Unable to deal with your custom scaling level. I can only handle up to 200% scaling. Contact me at ryanries09@gmail.com if you want me to add support for your scaling level.", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-
-		MyOutputDebugStringW(L"[%s] Line %d: ERROR! Unsupported DPI!\n", __FUNCTIONW__, __LINE__);
-
-		return(FALSE);
-	}
-
-	return(TRUE);
 }
 
 LSTATUS DeleteSnipExRegValue(_In_ wchar_t* ValueName)

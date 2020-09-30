@@ -57,6 +57,10 @@ This looks better:
 
 History:
 -------
+Update 9/30/2020:
+- Version 1.3.30
+  - Removed bad "custom DPI/scaling" code and replaced it with a simpler algorithm that should solve for any custom DPI.
+  
 Update 8/24/2020:
 - Version 1.3.27
   - Added a "Automatically copy snip to clipboard" option to the drop-down menu.

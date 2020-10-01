@@ -160,4 +160,9 @@ LSTATUS GetSnipExRegValue(_In_ wchar_t* ValueName, _In_ DWORD* ValueData);
 
 LSTATUS DeleteSnipExRegValue(_In_ wchar_t* ValueName);
 
+// If the user has a custom DPI or scaling level set, the title bar and borders
+// will get thicker and eat into our client area, causing our buttons to get clipped
+// so to compensate we need to make our window size larger as DPI goes up.
+void AdjustWindowSizeForThickTitleBars(void);
+
 #pragma endregion

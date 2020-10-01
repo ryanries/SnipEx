@@ -366,30 +366,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE PreviousInstanc
 		return(0);
 	}
 
-	// If a custom DPI/scaling level is set, the title bar and borders will get thicker
-	// as scaling level increases and that will eat into the client area of the window.
-	// Result is that buttons will get cropped as the client area of the window gets smaller
-	// as the title bar and borders get thicker. We have to compensate for that.	
-
-	RECT WindowRect = { 0 };
-
-	RECT ClientRect = { 0 };	
-
-	GetWindowRect(gMainWindowHandle, &WindowRect);
-
-	GetClientRect(gMainWindowHandle, &ClientRect);
-
-	int AdjustedHeight = (WindowRect.bottom - WindowRect.top) - (ClientRect.bottom - ClientRect.top);
-
-	int AdjustedWidth = (WindowRect.right - WindowRect.left) - (ClientRect.right - ClientRect.left);
-
-	SetWindowPos(gMainWindowHandle,
-		HWND_TOP,
-		0,
-		0,
-		gButtons[_countof(gButtons) - 1]->Rectangle.right + AdjustedWidth + 2,
-		gButtons[_countof(gButtons) - 1]->Rectangle.bottom + AdjustedHeight + 2,
-		SWP_NOMOVE | SWP_NOOWNERZORDER);
+	AdjustWindowSizeForThickTitleBars();
 
 	gMainWindowIsRunning = TRUE;
 
@@ -1654,18 +1631,7 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 
 					gAppState = APPSTATE_DELAYCOOKING;
 
-					RECT CurrentWindowPos = { 0 };
-
-					GetWindowRect(gMainWindowHandle, &CurrentWindowPos);
-
-					SetWindowPos(
-						gMainWindowHandle,
-						HWND_TOP,
-						CurrentWindowPos.left,
-						CurrentWindowPos.top,
-						gStartingMainWindowWidth,
-						gStartingMainWindowHeight,
-						0);
+					AdjustWindowSizeForThickTitleBars();
 
 					KillTimer(gMainWindowHandle, DELAY_TIMER);
 
@@ -2284,18 +2250,7 @@ LRESULT CALLBACK CaptureWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_
 
 				gCaptureSelectionRectangle.bottom = 0;
 				
-				RECT CurrentWindowPos = { 0 };
-
-				GetWindowRect(gMainWindowHandle, &CurrentWindowPos);
-
-				SetWindowPos(
-					gMainWindowHandle,
-					HWND_TOP,
-					CurrentWindowPos.left,
-					CurrentWindowPos.top,
-					gStartingMainWindowWidth,
-					gStartingMainWindowHeight,
-					0);
+				AdjustWindowSizeForThickTitleBars();
 
 				gNewButton.State = BUTTONSTATE_NORMAL;
 
@@ -3977,4 +3932,32 @@ BOOL CALLBACK TextEditCallback(_In_ HWND Dialog, _In_ UINT Message, _In_ WPARAM 
 	}
 
 	return(FALSE);
+}
+
+void AdjustWindowSizeForThickTitleBars(void)
+{
+	// If a custom DPI/scaling level is set, the title bar and borders will get thicker
+	// as scaling level increases and that will eat into the client area of the window.
+	// Result is that buttons will get cropped as the client area of the window gets smaller
+	// as the title bar and borders get thicker. We have to compensate for that.	
+
+	RECT WindowRect = { 0 };
+
+	RECT ClientRect = { 0 };
+
+	GetWindowRect(gMainWindowHandle, &WindowRect);
+
+	GetClientRect(gMainWindowHandle, &ClientRect);
+
+	int AdjustedHeight = (WindowRect.bottom - WindowRect.top) - (ClientRect.bottom - ClientRect.top);
+
+	int AdjustedWidth = (WindowRect.right - WindowRect.left) - (ClientRect.right - ClientRect.left);
+
+	SetWindowPos(gMainWindowHandle,
+		HWND_TOP,
+		0,
+		0,
+		gButtons[_countof(gButtons) - 1]->Rectangle.right + AdjustedWidth + 2,
+		gButtons[_countof(gButtons) - 1]->Rectangle.bottom + AdjustedHeight + 2,
+		SWP_NOMOVE | SWP_NOOWNERZORDER);
 }

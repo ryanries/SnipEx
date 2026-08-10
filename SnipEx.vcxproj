@@ -188,12 +188,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="SnipEx.c" />
+    <ClCompile Include="SnipExHijack.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ButtonDefs.h" />
     <ClInclude Include="GdiPlusInterop.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SnipEx.h" />
+    <ClInclude Include="SnipExHijack.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SnipEx.rc" />

@@ -44,6 +44,8 @@
 
 #include "GdiPlusInterop.h"						// Stuff to make GDI+ work in pure C
 
+#include "SnipExHijack.h"						// Snipping Tool replacement (IFEO + MSIX package hooks)
+
 APPSTATE gAppState = APPSTATE_BEFORECAPTURE;	// To track the overall state of the application
 
 BOOL gMainWindowIsRunning;						// Set this to FALSE to exit the app immediately.
@@ -114,7 +116,26 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE PreviousInstanc
 
 	UNREFERENCED_PARAMETER(CommandLine);
 
-	UNREFERENCED_PARAMETER(WindowShowCode);	
+	UNREFERENCED_PARAMETER(WindowShowCode);
+
+	// If Windows launched us as the Snipping Tool's package hook, handle the suspended process now.
+	TerminateHijackedSnippingToolProcess();
+
+	// If an unelevated instance asked us to Replace or Restore, do that work and exit.
+	ELEVATEDHIJACKREQUEST ElevatedRequest = GetElevatedHijackRequest();
+
+	if (ElevatedRequest == ELEVATEDHIJACKREQUEST_REPLACE)
+	{
+		ReplaceSnippingToolWithSnipEx(NULL);
+
+		return(0);
+	}
+	else if (ElevatedRequest == ELEVATEDHIJACKREQUEST_RESTORE)
+	{
+		RestoreWindowsSnippingTool(NULL);
+
+		return(0);
+	}
 
 	if ((gFont = GetStockObject(DEFAULT_GUI_FONT)) == NULL)
 	{
@@ -1704,109 +1725,51 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 			{
 				MyOutputDebugStringW(L"[%s] Line %d: User clicked on 'Replace Snipping Tool'.\n", __FUNCTIONW__, __LINE__);
 
-				// Need admin and UAC elevation to write to the image file execution options registry key
 				if (IsAppRunningElevated())
 				{
-					MyOutputDebugStringW(L"[%s] Line %d: Already UAC elevated.\n", __FUNCTIONW__, __LINE__);
-
-					HKEY IFEOKey = NULL;
-
-					HKEY SnippingToolKey = NULL;
-
-					if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options", 0, KEY_ALL_ACCESS, &IFEOKey) != ERROR_SUCCESS)
+					if (ReplaceSnippingToolWithSnipEx(gMainWindowHandle))
 					{
-						MessageBoxW(gMainWindowHandle, L"Error while attempting to open the Image File Execution Options subkey!", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-					}
-					else
-					{						
-						DWORD SnippingToolKeyDisposition = 0;
+						HMENU SystemMenu = GetSystemMenu(gMainWindowHandle, FALSE);
 
-						DWORD Error = RegCreateKeyExW(IFEOKey, L"SnippingTool.exe", 0, NULL, 0, KEY_WRITE, NULL, &SnippingToolKey, &SnippingToolKeyDisposition);
+						RemoveMenu(SystemMenu, SYSCMD_REPLACE, MF_BYCOMMAND);
 
-						if (Error == ERROR_SUCCESS)
+						AppendMenuW(SystemMenu, MF_STRING, SYSCMD_RESTORE, L"Restore Windows Snipping Tool\n");
+
+						if (gUACIcon != NULL)
 						{
-							wchar_t ModulePath[MAX_PATH] = { 0 };
+							MENUITEMINFOW MenuItemInfo = { sizeof(MENUITEMINFOW) };
 
-							GetModuleFileNameW(NULL, ModulePath, _countof(ModulePath));
+							MenuItemInfo.fMask = MIIM_BITMAP;
 
-							Error = RegSetValueExW(SnippingToolKey, L"Debugger", 0, REG_SZ, (const BYTE*)ModulePath, (DWORD)wcslen(ModulePath) * 2);
+							MenuItemInfo.hbmpItem = gUACIcon;
 
-							if (Error == ERROR_SUCCESS)
-							{
-								HMENU SystemMenu = GetSystemMenu(gMainWindowHandle, FALSE);
-
-								RemoveMenu(SystemMenu, SYSCMD_REPLACE, MF_BYCOMMAND);
-
-								AppendMenuW(SystemMenu, MF_STRING, SYSCMD_RESTORE, L"Restore Windows Snipping Tool\n");	
-
-								if (gUACIcon != NULL)
-								{
-									MENUITEMINFOW MenuItemInfo = { sizeof(MENUITEMINFOW) };
-
-									MenuItemInfo.fMask = MIIM_BITMAP;
-
-									MenuItemInfo.hbmpItem = gUACIcon;
-
-									SetMenuItemInfoW(SystemMenu, SYSCMD_RESTORE, FALSE, &MenuItemInfo);
-								}
-
-								MessageBoxW(gMainWindowHandle, L"The built-in SnippingTool.exe has been replaced.", L"Success", MB_OK | MB_ICONINFORMATION | MB_SYSTEMMODAL);
-							}
-							else
-							{
-								MessageBoxW(gMainWindowHandle, L"Error while creating Debugger registry value!", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-							}
+							SetMenuItemInfoW(SystemMenu, SYSCMD_RESTORE, FALSE, &MenuItemInfo);
 						}
-						else
-						{
-							MessageBoxW(gMainWindowHandle, L"Error while creating SnippingTool.exe registry key!", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-						}
-					}
-
-					if (SnippingToolKey != NULL)
-					{
-						RegCloseKey(SnippingToolKey);
-					}
-					if (IFEOKey != NULL)
-					{
-						RegCloseKey(IFEOKey);
 					}
 				}
 				else
 				{
-					MyOutputDebugStringW(L"[%s] Line %d: Need to UAC elevate first.\n", __FUNCTIONW__, __LINE__);
+					RelaunchElevatedForHijackRequest(gMainWindowHandle, ELEVATEDHIJACKREQUEST_REPLACE);
 
-					MessageBoxW(gMainWindowHandle, L"This action requires UAC elevation. After clicking OK, you will be prompted to elevate. Then retry the operation.", L"UAC Elevation Required", MB_OK | MB_ICONINFORMATION);
+					// Refresh the menu state after the elevated instance finishes.
+					HMENU SystemMenu = GetSystemMenu(gMainWindowHandle, FALSE);
 
-					wchar_t ModulePath[MAX_PATH] = { 0 };
-
-					GetModuleFileNameW(NULL, ModulePath, _countof(ModulePath));
-
-					SHELLEXECUTEINFOW ShellExecuteInfo = { sizeof(SHELLEXECUTEINFOW) };
-
-					ShellExecuteInfo.lpVerb = L"runas";
-
-					ShellExecuteInfo.lpFile = ModulePath;
-
-					ShellExecuteInfo.hwnd = NULL;
-
-					ShellExecuteInfo.nShow = SW_NORMAL;
-
-					if (!ShellExecuteExW(&ShellExecuteInfo))
+					if (GetSnippingToolHookState() == SNIPPINGTOOLHOOKSTATE_REPLACED)
 					{
-						DWORD Error = GetLastError();
+						RemoveMenu(SystemMenu, SYSCMD_REPLACE, MF_BYCOMMAND);
 
-						if (Error != ERROR_CANCELLED)
+						AppendMenuW(SystemMenu, MF_STRING, SYSCMD_RESTORE, L"Restore Windows Snipping Tool\n");
+
+						if (gUACIcon != NULL)
 						{
-							MessageBoxW(gMainWindowHandle, L"Error when attempting to re-launch the application with UAC elevation.", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-						}
-					}
-					else
-					{
-						// We just re-launched the app with UAC elevation - need to exit this instance.
-						PostQuitMessage(0);
+							MENUITEMINFOW MenuItemInfo = { sizeof(MENUITEMINFOW) };
 
-						gMainWindowIsRunning = FALSE;
+							MenuItemInfo.fMask = MIIM_BITMAP;
+
+							MenuItemInfo.hbmpItem = gUACIcon;
+
+							SetMenuItemInfoW(SystemMenu, SYSCMD_RESTORE, FALSE, &MenuItemInfo);
+						}
 					}
 				}
 			}
@@ -1814,91 +1777,51 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 			{
 				MyOutputDebugStringW(L"[%s] Line %d: User clicked on 'Restore Snipping Tool'.\n", __FUNCTIONW__, __LINE__);
 
-				// To "restore" the built-in snipping tool, all we have to do is delete the snippingtool.exe Image File Execution Options registry key.
 				if (IsAppRunningElevated())
 				{
-					MyOutputDebugStringW(L"[%s] Line %d: Already UAC elevated.\n", __FUNCTIONW__, __LINE__);
-					
-					HKEY IFEOKey = NULL;
-
-					if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options", 0, KEY_QUERY_VALUE, &IFEOKey) != ERROR_SUCCESS)
+					if (RestoreWindowsSnippingTool(gMainWindowHandle))
 					{
-						MessageBoxW(gMainWindowHandle, L"Error while attempting to open the Image File Execution Options subkey!", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);						
-					}
-					else
-					{
-						// This will fail if the subkey has subkeys
-						DWORD Error = ERROR_SUCCESS;
+						HMENU SystemMenu = GetSystemMenu(gMainWindowHandle, FALSE);
 
-						Error = RegDeleteKeyW(IFEOKey, L"SnippingTool.exe");
+						RemoveMenu(SystemMenu, SYSCMD_RESTORE, MF_BYCOMMAND);
 
-						if (Error != ERROR_SUCCESS)
+						AppendMenuW(SystemMenu, MF_STRING, SYSCMD_REPLACE, L"Replace Windows Snipping Tool with SnipEx\n");
+
+						if (gUACIcon != NULL)
 						{
-							MessageBoxW(gMainWindowHandle, L"Error while attempting to delete the SnippingTool.exe subkey!", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+							MENUITEMINFOW MenuItemInfo = { sizeof(MENUITEMINFOW) };
+
+							MenuItemInfo.fMask = MIIM_BITMAP;
+
+							MenuItemInfo.hbmpItem = gUACIcon;
+
+							SetMenuItemInfoW(SystemMenu, SYSCMD_REPLACE, FALSE, &MenuItemInfo);
 						}
-						else
-						{
-							HMENU SystemMenu = GetSystemMenu(gMainWindowHandle, FALSE);
-
-							RemoveMenu(SystemMenu, SYSCMD_RESTORE, MF_BYCOMMAND);
-
-							AppendMenuW(SystemMenu, MF_STRING, SYSCMD_REPLACE, L"Replace Windows Snipping Tool with SnipEx\n");	
-
-							if (gUACIcon != NULL)
-							{
-								MENUITEMINFOW MenuItemInfo = { sizeof(MENUITEMINFOW) };
-
-								MenuItemInfo.fMask = MIIM_BITMAP;
-
-								MenuItemInfo.hbmpItem = gUACIcon;
-
-								SetMenuItemInfoW(SystemMenu, SYSCMD_REPLACE, FALSE, &MenuItemInfo);
-							}
-
-							MessageBoxW(gMainWindowHandle, L"The built-in SnippingTool.exe has been restored.", L"Success", MB_OK | MB_ICONINFORMATION | MB_SYSTEMMODAL);
-						}
-					}
-
-					if (IFEOKey != NULL)
-					{
-						RegCloseKey(IFEOKey);
 					}
 				}
 				else
 				{
-					MyOutputDebugStringW(L"[%s] Line %d: Need to UAC elevate first.\n", __FUNCTIONW__, __LINE__);
+					RelaunchElevatedForHijackRequest(gMainWindowHandle, ELEVATEDHIJACKREQUEST_RESTORE);
 
-					MessageBoxW(gMainWindowHandle, L"This action requires UAC elevation. After clicking OK, you will be prompted to elevate. Then, retry the operation.", L"UAC Elevation Required", MB_OK | MB_ICONINFORMATION);
+					// Refresh the menu state after the elevated instance finishes.
+					HMENU SystemMenu = GetSystemMenu(gMainWindowHandle, FALSE);
 
-					wchar_t ModulePath[MAX_PATH] = { 0 };
-
-					GetModuleFileNameW(NULL, ModulePath, _countof(ModulePath));
-
-					SHELLEXECUTEINFOW ShellExecuteInfo = { sizeof(SHELLEXECUTEINFOW) };
-
-					ShellExecuteInfo.lpVerb = L"runas";
-
-					ShellExecuteInfo.lpFile = ModulePath;
-
-					ShellExecuteInfo.hwnd   = NULL;
-
-					ShellExecuteInfo.nShow  = SW_NORMAL;
-
-					if (!ShellExecuteExW(&ShellExecuteInfo))
+					if (GetSnippingToolHookState() != SNIPPINGTOOLHOOKSTATE_REPLACED)
 					{
-						DWORD Error = GetLastError();
+						RemoveMenu(SystemMenu, SYSCMD_RESTORE, MF_BYCOMMAND);
 
-						if (Error != ERROR_CANCELLED)
+						AppendMenuW(SystemMenu, MF_STRING, SYSCMD_REPLACE, L"Replace Windows Snipping Tool with SnipEx\n");
+
+						if (gUACIcon != NULL)
 						{
-							MessageBoxW(gMainWindowHandle, L"Error when attempting to re-launch the application with UAC elevation.", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);						
-						}							
-					}
-					else
-					{
-						// We just re-launched the app with UAC elevation - need to exit this instance.
-						PostQuitMessage(0);
+							MENUITEMINFOW MenuItemInfo = { sizeof(MENUITEMINFOW) };
 
-						gMainWindowIsRunning = FALSE;
+							MenuItemInfo.fMask = MIIM_BITMAP;
+
+							MenuItemInfo.hbmpItem = gUACIcon;
+
+							SetMenuItemInfoW(SystemMenu, SYSCMD_REPLACE, FALSE, &MenuItemInfo);
+						}
 					}
 				}
 			}
@@ -3429,18 +3352,6 @@ HRESULT AddAllMenuItems(_In_ HINSTANCE Instance)
 
 	HMENU SystemMenu = GetSystemMenu(gMainWindowHandle, FALSE);	
 
-	HKEY  SnipExKey = NULL;
-
-	DWORD SnipExKeyDisposition = 0;	
-
-	DWORD ValueSize = sizeof(DWORD);
-
-	BOOL  AlreadyReplaced = FALSE;
-	
-	HKEY  IFEOKey = NULL;	
-	
-	wchar_t DebuggerValue[256] = { 0 };
-
 	UINT16 ReplaceCommand = 0;
 
 	wchar_t ReplacementText[64] = { 0 };
@@ -3508,42 +3419,9 @@ HRESULT AddAllMenuItems(_In_ HINSTANCE Instance)
 		}
 	}
 
-	AppendMenuW(SystemMenu, MF_STRING, SYSCMD_UNDO, L"Undo (Ctrl+Z)");	
+	AppendMenuW(SystemMenu, MF_STRING, SYSCMD_UNDO, L"Undo (Ctrl+Z)");
 
-	SnipExKeyDisposition = 0;
-
-	ValueSize = sizeof(DebuggerValue);
-
-
-	// This key should always exist. Something is very wrong if we can't open it.
-	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options", 0, KEY_QUERY_VALUE, &IFEOKey) != ERROR_SUCCESS)
-	{
-		Result = GetLastError();
-
-		MyOutputDebugStringW(L"[%s] Line %d: ERROR: RegOpenKeyEx failed! 0x%lx\n", __FUNCTIONW__, __LINE__, Result);
-
-		goto Exit;
-	}
-
-	// If this subkey is not present, then that is OK, it just means it has never been added before
-	if (RegCreateKeyExW(IFEOKey, L"SnippingTool.exe", 0, NULL, 0, KEY_QUERY_VALUE, NULL, &SnipExKey, &SnipExKeyDisposition) == ERROR_SUCCESS)
-	{
-		RegQueryValueExW(SnipExKey, L"Debugger", NULL, NULL, (LPBYTE)&DebuggerValue, &ValueSize);
-
-		if (wcslen(DebuggerValue) > 0)
-		{
-			// Does the file specified by the "Debugger" value actually exist?
-
-			DWORD FileAttributes = GetFileAttributesW(DebuggerValue);
-
-			if (FileAttributes != INVALID_FILE_ATTRIBUTES && !(FileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			{
-				AlreadyReplaced = TRUE;
-			}
-		}
-	}
-
-	if (AlreadyReplaced)
+	if (GetSnippingToolHookState() == SNIPPINGTOOLHOOKSTATE_REPLACED)
 	{
 		ReplaceCommand = SYSCMD_RESTORE;
 
@@ -3580,11 +3458,6 @@ HRESULT AddAllMenuItems(_In_ HINSTANCE Instance)
 
 
 Exit:
-
-	if (IFEOKey != NULL)
-	{
-		RegCloseKey(IFEOKey);
-	}
 
 	return(Result);
 }

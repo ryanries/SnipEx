@@ -44,6 +44,14 @@ Replace Windows Snipping Tool with SnipEx:
 
 ![SnipEx 3](./pictures/replace.png)
 
+On older versions of Windows (7, 8, 8.1, and early builds of Windows 10), SnipEx uses the classic Image File Execution Options (IFEO) "Debugger" registry hack to intercept SnippingTool.exe launches -- the same technique Sysinternals Process Explorer uses to replace Task Manager.
+
+On Windows 10 (recent builds) and Windows 11, Microsoft converted the Snipping Tool into an MSIX-packaged app (Microsoft.ScreenSketch). The classic IFEO hook no longer intercepts it because the packaged app is not launched through CreateProcess in the traditional way. SnipEx now uses the IPackageDebugSettings COM interface to register itself as the package's debugger, which intercepts all Snipping Tool launch surfaces: the Start menu tile, the Win+Shift+S hotkey, the Print Screen key, the app execution alias, and the ms-screenclip/ms-screensketch protocol activations.
+
+Both mechanisms are applied simultaneously when both are applicable (e.g. on Windows 10 builds that have both the classic exe and the packaged app), so no launch surface is missed.
+
+**Security note:** When you click "Replace Windows Snipping Tool with SnipEx," the path to SnipEx.exe is registered as a machine-wide launch hook. If SnipEx is running from a user-writable location (Downloads, Desktop, a USB stick, etc.), a standard user could replace the binary and gain code execution as any other user who opens the Snipping Tool. To prevent this, SnipEx will warn you and offer to copy itself into Program Files before registering the hook. If you decline the copy, the Replace operation is aborted.
+
 With other snipping tools, this looks bad:
 
 ![Ugly](./pictures/ugly.png)
@@ -57,6 +65,23 @@ This looks better:
 
 History:
 -------
+Update 8/10/2026:
+- Version 1.4.31
+  - Fixed the "Replace Windows Snipping Tool with SnipEx" feature on Windows 10 and Windows 11.
+    The Snipping Tool became an MSIX-packaged app starting in Windows 10, and the classic Image File
+    Execution Options (IFEO) hook no longer intercepts it. SnipEx now uses the IPackageDebugSettings
+    COM interface to hook the modern packaged Snipping Tool while keeping the legacy IFEO method for
+    older versions of Windows where the classic SnippingTool.exe still exists.
+  - The Replace feature now copies SnipEx.exe into Program Files if it is running from an unprotected
+    location (e.g. Downloads or Desktop), preventing a privilege escalation where a standard user could
+    swap the registered binary.
+  - Fixed a pre-existing bug where the IFEO Debugger value was written without a terminating NUL and
+    without quoting, which broke paths containing spaces.
+  - Manual recovery: if SnipEx is uninstalled while the hook is active, run the following from an
+    elevated command prompt to restore the Snipping Tool:
+      reg delete "HKLM\SOFTWARE\SnipEx" /f
+      reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SnippingTool.exe" /v Debugger /f
+
 Update 9/30/2020:
 - Version 1.3.30
   - Removed bad "custom DPI/scaling" code and replaced it with a simpler algorithm that should solve for any custom DPI.

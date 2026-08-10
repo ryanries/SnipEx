@@ -14,6 +14,10 @@
 
 #define REG_AUTOCOPYNAME	 L"AutoCopy"
 
+#define REG_AUTOSAVENAME     L"AutoSave"
+
+#define REG_AUTOSAVEPATHNAME L"AutoSavePath"
+
 
 // You could refer to an individual button like gButtons[BUTTON_NEW - 10001], gButtons[BUTTON_DELAY - 10001], etc.
 
@@ -66,6 +70,8 @@
 #define SYSCMD_REMEMBER 20005
 
 #define SYSCMD_AUTOCOPY 20006
+
+#define SYSCMD_AUTOSAVE 20007
 
 
 #define DELAY_TIMER    30001
@@ -157,6 +163,12 @@ void MyOutputDebugStringW(_In_ wchar_t* Message, _In_ ...);
 LSTATUS SetSnipExRegValue(_In_ wchar_t* ValueName, _In_ DWORD* ValueData);
 
 LSTATUS GetSnipExRegValue(_In_ wchar_t* ValueName, _In_ DWORD* ValueData);
+
+LSTATUS SetSnipExRegString(_In_ wchar_t* ValueName, _In_ wchar_t* ValueData);
+
+LSTATUS GetSnipExRegString(_In_ wchar_t* ValueName, _Out_writes_(BufferLength) wchar_t* ValueData, _In_ DWORD BufferLength);
+
+BOOL AutoSaveSnip(void);
 
 LSTATUS DeleteSnipExRegValue(_In_ wchar_t* ValueName);
 

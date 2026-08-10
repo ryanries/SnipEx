@@ -94,6 +94,10 @@ DWORD gRememberLastTool;						// Does the user want to remember the previously-u
 
 DWORD gAutoCopy;								// Does the user want to automatically copy each snip to the clipboard?
 
+DWORD gAutoSave;								// Does the user want to automatically save each snip to a folder?
+
+wchar_t gAutoSavePath[MAX_PATH];				// The folder where auto-saved snips go.
+
 DWORD gLastTool;								// What was the last tool that the user used? (NOT save, copy, new, or delay.)
 
 HFONT gFont;									// The font the user selects for the Text tool.
@@ -1899,6 +1903,82 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					CRASH(0);
 				}
 			}
+			else if (WParam == SYSCMD_AUTOSAVE)
+			{
+				MyOutputDebugStringW(L"[%s] Line %d: User clicked on 'Automatically save screen captures' menu item.\n", __FUNCTIONW__, __LINE__);
+
+				if (gAutoSave)
+				{
+					CheckMenuItem(GetSystemMenu(gMainWindowHandle, FALSE), SYSCMD_AUTOSAVE, MF_BYCOMMAND | MF_UNCHECKED);
+
+					gAutoSave = FALSE;
+
+					gAutoSavePath[0] = L'\0';
+				}
+				else
+				{
+					HRESULT ComResult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+					BOOL ComInitializedByUs = (ComResult == S_OK || ComResult == S_FALSE);
+
+					IFileDialog* FolderDialog = NULL;
+
+					HRESULT DialogResult = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, &IID_IFileOpenDialog, (void**)&FolderDialog);
+
+					if (SUCCEEDED(DialogResult))
+					{
+						DWORD Options = 0;
+
+						FolderDialog->lpVtbl->GetOptions(FolderDialog, &Options);
+
+						FolderDialog->lpVtbl->SetOptions(FolderDialog, Options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
+
+						FolderDialog->lpVtbl->SetTitle(FolderDialog, L"Select folder for auto-saved screen captures");
+
+						DialogResult = FolderDialog->lpVtbl->Show(FolderDialog, gMainWindowHandle);
+
+						if (SUCCEEDED(DialogResult))
+						{
+							IShellItem* FolderItem = NULL;
+
+							if (SUCCEEDED(FolderDialog->lpVtbl->GetResult(FolderDialog, &FolderItem)))
+							{
+								PWSTR FolderPath = NULL;
+
+								if (SUCCEEDED(FolderItem->lpVtbl->GetDisplayName(FolderItem, SIGDN_FILESYSPATH, &FolderPath)))
+								{
+									wcscpy_s(gAutoSavePath, _countof(gAutoSavePath), FolderPath);
+
+									CoTaskMemFree(FolderPath);
+
+									gAutoSave = TRUE;
+
+									CheckMenuItem(GetSystemMenu(gMainWindowHandle, FALSE), SYSCMD_AUTOSAVE, MF_BYCOMMAND | MF_CHECKED);
+								}
+
+								FolderItem->lpVtbl->Release(FolderItem);
+							}
+						}
+
+						FolderDialog->lpVtbl->Release(FolderDialog);
+					}
+
+					if (ComInitializedByUs)
+					{
+						CoUninitialize();
+					}
+				}
+
+				if (SetSnipExRegValue(REG_AUTOSAVENAME, &gAutoSave) != ERROR_SUCCESS)
+				{
+					CRASH(0);
+				}
+
+				if (gAutoSave && wcslen(gAutoSavePath) > 0)
+				{
+					SetSnipExRegString(REG_AUTOSAVEPATHNAME, gAutoSavePath);
+				}
+			}
 			else if (WParam == SYSCMD_UNDO)
 			{
 				MyOutputDebugStringW(L"[%s] Line %d: User clicked on 'Undo' menu item.\n", __FUNCTIONW__, __LINE__);
@@ -2622,6 +2702,11 @@ void CaptureWindow_OnLeftButtonUp(void)
 
 				CRASH(0);
 			}
+		}
+
+		if (gAutoSave)
+		{
+			AutoSaveSnip();
 		}
 	}
 }
@@ -3387,6 +3472,13 @@ HRESULT AddAllMenuItems(_In_ HINSTANCE Instance)
 		goto Exit;
 	}
 
+	if ((Result = GetSnipExRegValue(REG_AUTOSAVENAME, &gAutoSave)) != ERROR_SUCCESS)
+	{
+		goto Exit;
+	}
+
+	GetSnipExRegString(REG_AUTOSAVEPATHNAME, gAutoSavePath, _countof(gAutoSavePath));
+
 	if (gShouldAddDropShadow > 0)
 	{
 		AppendMenuW(SystemMenu, MF_STRING | MF_CHECKED, SYSCMD_SHADOW, L"Drop Shadow Effect");
@@ -3403,6 +3495,15 @@ HRESULT AddAllMenuItems(_In_ HINSTANCE Instance)
 	else
 	{
 		AppendMenuW(SystemMenu, MF_STRING | MF_UNCHECKED, SYSCMD_AUTOCOPY, L"Automatically copy snip to clipboard");
+	}
+
+	if (gAutoSave > 0 && wcslen(gAutoSavePath) > 0)
+	{
+		AppendMenuW(SystemMenu, MF_STRING | MF_CHECKED, SYSCMD_AUTOSAVE, L"Automatically save screen captures");
+	}
+	else
+	{
+		AppendMenuW(SystemMenu, MF_STRING | MF_UNCHECKED, SYSCMD_AUTOSAVE, L"Automatically save screen captures");
 	}
 
 	if (gRememberLastTool > 0)
@@ -3833,4 +3934,123 @@ void AdjustWindowSizeForThickTitleBars(void)
 		gButtons[_countof(gButtons) - 1]->Rectangle.right + AdjustedWidth + 2,
 		gButtons[_countof(gButtons) - 1]->Rectangle.bottom + AdjustedHeight + 2,
 		SWP_NOMOVE | SWP_NOOWNERZORDER);
+}
+
+
+LSTATUS SetSnipExRegString(_In_ wchar_t* ValueName, _In_ wchar_t* ValueData)
+{
+	LSTATUS Result = ERROR_SUCCESS;
+
+	HKEY SoftwareKey = NULL;
+
+	HKEY SnipExKey = NULL;
+
+	DWORD SnipExKeyDisposition = 0;
+
+	if ((Result = RegOpenKeyExW(HKEY_CURRENT_USER, L"SOFTWARE", 0, KEY_ALL_ACCESS, &SoftwareKey)) != ERROR_SUCCESS)
+	{
+		MessageBoxW(NULL, L"Unable to read HKCU\\SOFTWARE registry key!", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+	}
+	else
+	{
+		if ((Result = RegCreateKeyExW(SoftwareKey, L"SnipEx", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &SnipExKey, &SnipExKeyDisposition)) == ERROR_SUCCESS)
+		{
+			DWORD DataSize = (DWORD)((wcslen(ValueData) + 1) * sizeof(WCHAR));
+
+			if ((Result = RegSetValueExW(SnipExKey, ValueName, 0, REG_SZ, (const BYTE*)ValueData, DataSize)) != ERROR_SUCCESS)
+			{
+				MessageBoxW(gMainWindowHandle, L"Could not set registry string value!", L"Error", MB_OK | MB_SYSTEMMODAL | MB_ICONERROR);
+			}
+		}
+	}
+
+	if (SnipExKey != NULL)
+	{
+		RegCloseKey(SnipExKey);
+	}
+
+	if (SoftwareKey != NULL)
+	{
+		RegCloseKey(SoftwareKey);
+	}
+
+	return(Result);
+}
+
+
+LSTATUS GetSnipExRegString(_In_ wchar_t* ValueName, _Out_writes_(BufferLength) wchar_t* ValueData, _In_ DWORD BufferLength)
+{
+	LSTATUS Result = ERROR_SUCCESS;
+
+	HKEY SoftwareKey = NULL;
+
+	HKEY SnipExKey = NULL;
+
+	DWORD SnipExKeyDisposition = 0;
+
+	DWORD ValueSize = BufferLength * sizeof(WCHAR);
+
+	DWORD ValueType = 0;
+
+	ValueData[0] = L'\0';
+
+	if ((Result = RegOpenKeyExW(HKEY_CURRENT_USER, L"SOFTWARE", 0, KEY_READ, &SoftwareKey)) != ERROR_SUCCESS)
+	{
+		goto Exit;
+	}
+
+	if ((Result = RegCreateKeyExW(SoftwareKey, L"SnipEx", 0, NULL, 0, KEY_READ, NULL, &SnipExKey, &SnipExKeyDisposition)) != ERROR_SUCCESS)
+	{
+		goto Exit;
+	}
+
+	Result = RegQueryValueExW(SnipExKey, ValueName, NULL, &ValueType, (BYTE*)ValueData, &ValueSize);
+
+	if (Result == ERROR_FILE_NOT_FOUND)
+	{
+		Result = ERROR_SUCCESS;
+	}
+	else if (Result != ERROR_SUCCESS || ValueType != REG_SZ)
+	{
+		ValueData[0] = L'\0';
+	}
+
+Exit:
+
+	if (SnipExKey != NULL)
+	{
+		RegCloseKey(SnipExKey);
+	}
+
+	if (SoftwareKey != NULL)
+	{
+		RegCloseKey(SoftwareKey);
+	}
+
+	return(Result);
+}
+
+
+BOOL AutoSaveSnip(void)
+{
+	if (!gAutoSave || wcslen(gAutoSavePath) == 0 || gSnipStates[gCurrentSnipState] == NULL)
+	{
+		return(FALSE);
+	}
+
+	SYSTEMTIME LocalTime = { 0 };
+
+	GetLocalTime(&LocalTime);
+
+	wchar_t FilePath[MAX_PATH] = { 0 };
+
+	swprintf_s(FilePath, _countof(FilePath),
+		L"%s\\SnipEx_%04d-%02d-%02d_%02d-%02d-%02d-%03d.png",
+		gAutoSavePath,
+		(int)LocalTime.wYear, (int)LocalTime.wMonth, (int)LocalTime.wDay,
+		(int)LocalTime.wHour, (int)LocalTime.wMinute, (int)LocalTime.wSecond, (int)LocalTime.wMilliseconds);
+
+	MyOutputDebugStringW(L"[%s] Line %d: Auto-saving snip to %s\n", __FUNCTIONW__, __LINE__, FilePath);
+
+	return(SavePngToFile(FilePath));
 }

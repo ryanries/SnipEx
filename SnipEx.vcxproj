@@ -189,6 +189,7 @@
   <ItemGroup>
     <ClCompile Include="SnipEx.c" />
     <ClCompile Include="SnipExHijack.c" />
+    <ClCompile Include="SnipExTray.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ButtonDefs.h" />
@@ -196,6 +197,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="SnipEx.h" />
     <ClInclude Include="SnipExHijack.h" />
+    <ClInclude Include="SnipExTray.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SnipEx.rc" />

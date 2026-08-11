@@ -46,6 +46,8 @@
 
 #include "SnipExHijack.h"						// Snipping Tool replacement (IFEO + MSIX package hooks)
 
+#include "SnipExTray.h"							// Background mode for Win+Shift+S intercept on Win10
+
 APPSTATE gAppState = APPSTATE_BEFORECAPTURE;	// To track the overall state of the application
 
 BOOL gMainWindowIsRunning;						// Set this to FALSE to exit the app immediately.
@@ -98,6 +100,10 @@ DWORD gAutoSave;								// Does the user want to automatically save each snip to
 
 wchar_t gAutoSavePath[MAX_PATH];				// The folder where auto-saved snips go.
 
+DWORD gHotkeyIntercept;						// Should SnipEx intercept Win+Shift+S in the background?
+
+BOOL gStartedMinimized;							// Was SnipEx launched with --minimized (tray mode)?
+
 DWORD gLastTool;								// What was the last tool that the user used? (NOT save, copy, new, or delay.)
 
 HFONT gFont;									// The font the user selects for the Text tool.
@@ -139,6 +145,28 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE PreviousInstanc
 		RestoreWindowsSnippingTool(NULL);
 
 		return(0);
+	}
+
+	// Check if started in tray/minimized mode (auto-start with Windows).
+	{
+		int ArgumentCount = 0;
+
+		LPWSTR* Arguments = CommandLineToArgvW(GetCommandLineW(), &ArgumentCount);
+
+		if (Arguments != NULL)
+		{
+			for (int Index = 1; Index < ArgumentCount; Index++)
+			{
+				if (_wcsicmp(Arguments[Index], L"--minimized") == 0)
+				{
+					gStartedMinimized = TRUE;
+
+					break;
+				}
+			}
+
+			LocalFree(Arguments);
+		}
 	}
 
 	if ((gFont = GetStockObject(DEFAULT_GUI_FONT)) == NULL)
@@ -422,6 +450,23 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE PreviousInstanc
 
 	AdjustWindowSizeForThickTitleBars();
 
+	// Start hotkey intercept if enabled and needed (Win10).
+	if (gHotkeyIntercept && IsHotkeyInterceptNeeded())
+	{
+		StartHotkeyIntercept();
+	}
+
+	// If launched with --minimized, hide the window and just show the tray icon.
+	if (gStartedMinimized)
+	{
+		ShowWindow(gMainWindowHandle, SW_HIDE);
+
+		if (!gHotkeyIntercept || !IsHotkeyInterceptNeeded())
+		{
+			StartHotkeyIntercept();
+		}
+	}
+
 	gMainWindowIsRunning = TRUE;
 
 	MSG MainWindowMessage      = { 0 };
@@ -485,8 +530,28 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 
 	switch (Message)
 	{
+		case WM_HOTKEY_INTERCEPTED:
+		{
+			MyOutputDebugStringW(L"[%s] Line %d: Win+Shift+S intercepted by keyboard hook.\n", __FUNCTIONW__, __LINE__);
+
+			ShowWindow(gMainWindowHandle, SW_RESTORE);
+
+			SetForegroundWindow(gMainWindowHandle);
+
+			NewButton_Click();
+
+			break;
+		}
+		case WM_TRAYICON:
+		{
+			HandleTrayIconMessage(Window, WParam, LParam);
+
+			break;
+		}
 		case WM_CLOSE:
 		{
+			StopHotkeyIntercept();
+
 			PostQuitMessage(0);
 
 			gMainWindowIsRunning = FALSE;
@@ -2008,6 +2073,41 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					SetSnipExRegString(REG_AUTOSAVEPATHNAME, gAutoSavePath);
 				}
 			}
+			else if (WParam == SYSCMD_HOTKEY)
+			{
+				MyOutputDebugStringW(L"[%s] Line %d: User clicked on 'Intercept Win+Shift+S' menu item.\n", __FUNCTIONW__, __LINE__);
+
+				if (gHotkeyIntercept)
+				{
+					StopHotkeyIntercept();
+
+					SetAutoStart(FALSE);
+
+					CheckMenuItem(GetSystemMenu(gMainWindowHandle, FALSE), SYSCMD_HOTKEY, MF_BYCOMMAND | MF_UNCHECKED);
+
+					gHotkeyIntercept = FALSE;
+				}
+				else
+				{
+					if (StartHotkeyIntercept())
+					{
+						SetAutoStart(TRUE);
+
+						CheckMenuItem(GetSystemMenu(gMainWindowHandle, FALSE), SYSCMD_HOTKEY, MF_BYCOMMAND | MF_CHECKED);
+
+						gHotkeyIntercept = TRUE;
+					}
+					else
+					{
+						MessageBoxW(gMainWindowHandle, L"Failed to install the keyboard hook.", L"Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+					}
+				}
+
+				if (SetSnipExRegValue(REG_HOTKEYINTERCEPTNAME, &gHotkeyIntercept) != ERROR_SUCCESS)
+				{
+					CRASH(0);
+				}
+			}
 			else if (WParam == SYSCMD_UNDO)
 			{
 				MyOutputDebugStringW(L"[%s] Line %d: User clicked on 'Undo' menu item.\n", __FUNCTIONW__, __LINE__);
@@ -3508,6 +3608,11 @@ HRESULT AddAllMenuItems(_In_ HINSTANCE Instance)
 
 	GetSnipExRegString(REG_AUTOSAVEPATHNAME, gAutoSavePath, _countof(gAutoSavePath));
 
+	if ((Result = GetSnipExRegValue(REG_HOTKEYINTERCEPTNAME, &gHotkeyIntercept)) != ERROR_SUCCESS)
+	{
+		goto Exit;
+	}
+
 	if (gShouldAddDropShadow > 0)
 	{
 		AppendMenuW(SystemMenu, MF_STRING | MF_CHECKED, SYSCMD_SHADOW, L"Drop Shadow Effect");
@@ -3533,6 +3638,18 @@ HRESULT AddAllMenuItems(_In_ HINSTANCE Instance)
 	else
 	{
 		AppendMenuW(SystemMenu, MF_STRING | MF_UNCHECKED, SYSCMD_AUTOSAVE, L"Automatically save screen captures");
+	}
+
+	if (IsHotkeyInterceptNeeded())
+	{
+		if (gHotkeyIntercept > 0)
+		{
+			AppendMenuW(SystemMenu, MF_STRING | MF_CHECKED, SYSCMD_HOTKEY, L"Intercept Win+Shift+S (stay in background)");
+		}
+		else
+		{
+			AppendMenuW(SystemMenu, MF_STRING | MF_UNCHECKED, SYSCMD_HOTKEY, L"Intercept Win+Shift+S (stay in background)");
+		}
 	}
 
 	if (gRememberLastTool > 0)

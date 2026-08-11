@@ -104,6 +104,8 @@ DWORD gHotkeyIntercept;						// Should SnipEx intercept Win+Shift+S in the backg
 
 BOOL gStartedMinimized;							// Was SnipEx launched with --minimized (tray mode)?
 
+DWORD gPendingCaptureMode;						// 0=normal (manual rectangle), 1=current monitor, 2=all monitors
+
 DWORD gLastTool;								// What was the last tool that the user used? (NOT save, copy, new, or delay.)
 
 HFONT gFont;									// The font the user selects for the Text tool.
@@ -1731,12 +1733,39 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 
 					HilighterPixelsAlreadyDrawnCounter = 0;
 
-					if (NewButton_Click() == FALSE)
-					{						
-						gMainWindowIsRunning = FALSE;
+					if (GetKeyState(VK_SHIFT) & 0x8000)
+					{
+						BOOL AllMonitors = (GetKeyState(VK_CONTROL) & 0x8000) ? TRUE : FALSE;
 
-						CRASH(0);
-					}				
+						if (FullScreenSnip(AllMonitors) == FALSE)
+						{
+							gMainWindowIsRunning = FALSE;
+
+							CRASH(0);
+						}
+					}
+					else if (gPendingCaptureMode > 0)
+					{
+						BOOL AllMonitors = (gPendingCaptureMode == 2);
+
+						gPendingCaptureMode = 0;
+
+						if (FullScreenSnip(AllMonitors) == FALSE)
+						{
+							gMainWindowIsRunning = FALSE;
+
+							CRASH(0);
+						}
+					}
+					else
+					{
+						if (NewButton_Click() == FALSE)
+						{
+							gMainWindowIsRunning = FALSE;
+
+							CRASH(0);
+						}
+					}
 
 					break;
 				}
@@ -1749,6 +1778,15 @@ LRESULT CALLBACK MainWindowCallback(_In_ HWND Window, _In_ UINT Message, _In_ WP
 					SetWindowTextW(gMainWindowHandle, TitleBuffer);
 
 					gAppState = APPSTATE_DELAYCOOKING;
+
+					if (GetKeyState(VK_SHIFT) & 0x8000)
+					{
+						gPendingCaptureMode = (GetKeyState(VK_CONTROL) & 0x8000) ? 2 : 1;
+					}
+					else
+					{
+						gPendingCaptureMode = 0;
+					}
 
 					AdjustWindowSizeForThickTitleBars();
 
@@ -4199,4 +4237,55 @@ BOOL AutoSaveSnip(void)
 	MyOutputDebugStringW(L"[%s] Line %d: Auto-saving snip to %s\n", __FUNCTIONW__, __LINE__, FilePath);
 
 	return(SavePngToFile(FilePath));
+}
+
+
+BOOL FullScreenSnip(_In_ BOOL AllMonitors)
+{
+	if (NewButton_Click() == FALSE)
+	{
+		return(FALSE);
+	}
+
+	if (AllMonitors)
+	{
+		gCaptureSelectionRectangle.left   = 0;
+
+		gCaptureSelectionRectangle.top    = 0;
+
+		gCaptureSelectionRectangle.right  = gDisplayWidth;
+
+		gCaptureSelectionRectangle.bottom = gDisplayHeight;
+	}
+	else
+	{
+		HMONITOR Monitor = MonitorFromWindow(gMainWindowHandle, MONITOR_DEFAULTTONEAREST);
+
+		MONITORINFO MonitorInfo = { sizeof(MONITORINFO) };
+
+		if (GetMonitorInfoW(Monitor, &MonitorInfo))
+		{
+			gCaptureSelectionRectangle.left   = MonitorInfo.rcMonitor.left - gDisplayLeft;
+
+			gCaptureSelectionRectangle.top    = MonitorInfo.rcMonitor.top - gDisplayTop;
+
+			gCaptureSelectionRectangle.right  = MonitorInfo.rcMonitor.right - gDisplayLeft;
+
+			gCaptureSelectionRectangle.bottom = MonitorInfo.rcMonitor.bottom - gDisplayTop;
+		}
+		else
+		{
+			gCaptureSelectionRectangle.left   = 0;
+
+			gCaptureSelectionRectangle.top    = 0;
+
+			gCaptureSelectionRectangle.right  = gDisplayWidth;
+
+			gCaptureSelectionRectangle.bottom = gDisplayHeight;
+		}
+	}
+
+	CaptureWindow_OnLeftButtonUp();
+
+	return(TRUE);
 }

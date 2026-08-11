@@ -170,6 +170,10 @@ LSTATUS GetSnipExRegString(_In_ wchar_t* ValueName, _Out_writes_(BufferLength) w
 
 BOOL AutoSaveSnip(void);
 
+// Captures the full screen without user selection. If AllMonitors is TRUE, captures the
+// entire virtual desktop. If FALSE, captures only the monitor containing the SnipEx window.
+BOOL FullScreenSnip(_In_ BOOL AllMonitors);
+
 LSTATUS DeleteSnipExRegValue(_In_ wchar_t* ValueName);
 
 // If the user has a custom DPI or scaling level set, the title bar and borders

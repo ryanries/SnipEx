@@ -82,6 +82,21 @@ Update 8/10/2026:
       reg delete "HKLM\SOFTWARE\SnipEx" /f
       reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SnippingTool.exe" /v Debugger /f
 
+Update 8/11/2026:
+- Version 1.4.33
+  - Added "Intercept Win+Shift+S (stay in background)" option for Windows 10 users. On Windows 10,
+    the Win+Shift+S shortcut is handled directly by the shell (explorer.exe) rather than by launching
+    the Snipping Tool package, so the IPackageDebugSettings hook alone cannot intercept it. When this
+    option is enabled, SnipEx installs a low-level keyboard hook to catch Win+Shift+S before the shell
+    sees it, minimizes to the notification area (system tray), and registers itself to auto-start with
+    Windows. This option is only shown on Windows 10 systems where it is needed; on Windows 11 the
+    package hook already intercepts Win+Shift+S without needing a background process.
+  - Added "Automatically save screen captures" option. When enabled, a folder picker dialog lets
+    you choose a destination folder, and every new snip is automatically saved as a timestamped PNG
+    file (e.g. SnipEx_2026-08-11_14-30-05-123.png) in that folder.
+  - Fixed an issue where SnipEx could spawn behind other windows on some PCs when launched via the
+    Snipping Tool package hook (Win+Shift+S / Start menu).
+
 Update 9/30/2020:
 - Version 1.3.30
   - Removed bad "custom DPI/scaling" code and replaced it with a simpler algorithm that should solve for any custom DPI.

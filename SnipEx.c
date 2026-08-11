@@ -123,7 +123,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE PreviousInstanc
 	UNREFERENCED_PARAMETER(WindowShowCode);
 
 	// If Windows launched us as the Snipping Tool's package hook, handle the suspended process now.
-	TerminateHijackedSnippingToolProcess();
+	HIJACKEDLAUNCHRESULT HijackResult = TerminateHijackedSnippingToolProcess();
 
 	// If an unelevated instance asked us to Replace or Restore, do that work and exit.
 	ELEVATEDHIJACKREQUEST ElevatedRequest = GetElevatedHijackRequest();
@@ -306,6 +306,35 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE PreviousInstanc
 	MyOutputDebugStringW(L"[%s] Line %d: Setting window text for *DEBUG BUILD*.\n", __FUNCTIONW__, __LINE__);
 
 	#endif
+
+	// When launched as the Snipping Tool's package debugger, Windows may not grant us foreground
+	// activation rights because the process was spawned by the activation infrastructure rather
+	// than by direct user interaction. Use AttachThreadInput to temporarily join the foreground
+	// thread's input queue, which allows SetForegroundWindow to succeed.
+	if (HijackResult == HIJACKEDLAUNCHRESULT_SNIPPINGTOOLTERMINATED)
+	{
+		HWND ForegroundWindow = GetForegroundWindow();
+
+		if (ForegroundWindow != NULL && ForegroundWindow != gMainWindowHandle)
+		{
+			DWORD ForegroundThreadId = GetWindowThreadProcessId(ForegroundWindow, NULL);
+
+			DWORD OurThreadId = GetCurrentThreadId();
+
+			if (ForegroundThreadId != OurThreadId)
+			{
+				AttachThreadInput(OurThreadId, ForegroundThreadId, TRUE);
+
+				SetForegroundWindow(gMainWindowHandle);
+
+				AttachThreadInput(OurThreadId, ForegroundThreadId, FALSE);
+			}
+		}
+		else
+		{
+			SetForegroundWindow(gMainWindowHandle);
+		}
+	}
 
 	// Create all the buttons.
 	for (UINT8 Counter = 0; Counter < _countof(gButtons); Counter++)

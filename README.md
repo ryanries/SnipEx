@@ -12,7 +12,11 @@ Shortcut keys:
 -------------
  - Escape cancels an active screen capture, or exits the app.
  - N = New Snip
+ - Shift+N = Capture the entire current monitor
+ - Ctrl+Shift+N = Capture the entire display area (all monitors)
  - D = Delay Snip
+ - Shift+D = Delay, then capture the entire current monitor
+ - Ctrl+Shift+D = Delay, then capture all monitors
  - S = Save Snip
  - C = Copy Snip
  - H = Hilight Snip (Toggle High-Contrast Hilighter)
@@ -96,6 +100,11 @@ Update 8/11/2026:
     file (e.g. SnipEx_2026-08-11_14-30-05-123.png) in that folder.
   - Fixed an issue where SnipEx could spawn behind other windows on some PCs when launched via the
     Snipping Tool package hook (Win+Shift+S / Start menu).
+  - Added full-screen capture shortcuts:
+    - Shift+N (or Shift+click New): instantly captures the entire monitor that SnipEx currently resides on,
+      without requiring the user to manually draw a selection rectangle.
+    - Ctrl+Shift+N (or Ctrl+Shift+click New): captures the entire display area across all monitors.
+    - Shift+D (or Shift+click Delay) and Ctrl+Shift+D: same as above, but after the countdown timer.
 
 Update 9/30/2020:
 - Version 1.3.30
